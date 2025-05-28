@@ -2,7 +2,31 @@ import React, { useState, type FormEvent } from "react";
 import { login, getUserInfo } from "../services/api";
 import { useNavigate } from "react-router-dom";
 
-const Login: React.FC = () => {
+interface UserInfo {
+  id?: number;
+  username: string;
+  email?: string;
+  phone?: string;
+  role?: string;
+  status?: string;
+  profilePicture: string | null;
+}
+
+interface UserInfoResponse {
+  id?: number;
+  username: string;
+  email?: string;
+  phone?: string;
+  role: string;
+  status?: string;
+  profilePicture?: string;
+}
+
+interface LoginProps {
+  updateUser: (userData: Partial<UserInfo>) => void;
+}
+
+const Login: React.FC<LoginProps> = ({ updateUser }) => {
   const [formData, setFormData] = useState({
     username: "",
     password: "",
@@ -26,20 +50,29 @@ const Login: React.FC = () => {
       localStorage.setItem("accessToken", response.accessToken);
       localStorage.setItem("refreshToken", response.refreshToken);
 
-      // Kullanıcı bilgilerini al
-      const userInfo = await getUserInfo(response.accessToken);
-      const role = userInfo.role;
+      const userInfo: UserInfoResponse = await getUserInfo(response.accessToken);
+      const { username, role, email, phone, status, profilePicture } = userInfo;
 
-      // Role göre yönlendirme
-      if (role === "ROLE_ADMIN") {
-        navigate("/admin-dashboard");
-      } else if (role === "ROLE_USER") {
-        navigate("/user-dashboard");
+      localStorage.setItem("username", username);
+
+      updateUser({
+        username,
+        role,
+        email,
+        phone,
+        status,
+        profilePicture: profilePicture || null,
+      });
+
+      if (role === "ADMIN") {
+        navigate("/admin/dashboard");
+      } else if (role === "USER") {
+        navigate("/user/dashboard");
       } else {
         setError("Bilinmeyen kullanıcı rolü");
       }
     } catch (err: any) {
-      setError(err.message);
+      setError(err.message || "Giriş sırasında bir hata oluştu.");
     } finally {
       setLoading(false);
     }
@@ -97,8 +130,8 @@ const Login: React.FC = () => {
             Kayıt Ol
           </a>
         </p>
-         <p className="mt-4 text-center text-sm text-gray-600">
-          Şifreni Mi Unuttun?{" "}
+        <p className="mt-4 text-center text-sm text-gray-600">
+          Şifreni mi unuttun?{" "}
           <a href="/forgot-password" className="text-indigo-600 hover:underline">
             Şifremi Unuttum
           </a>
