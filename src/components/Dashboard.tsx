@@ -3,10 +3,27 @@ import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import Navbar from "./Navbar";
 import Sidebar from "./Sidebar";
+import { 
+    LockClosedIcon, 
+    UsersIcon, 
+    ClockIcon, 
+    StarIcon, 
+    FolderIcon, 
+    EyeIcon,
+    ChevronRightIcon
+} from '@heroicons/react/24/outline';
+
+// TypeScript Arayüzleri (Değişiklik yok)
+interface Category {
+  id: number;
+  name: string;
+  description: string;
+  status: string;
+}
 
 interface DashboardData {
   adminName?: string;
-  username: string;
+  username:string;
   passwordCount?: number;
   userCount?: number;
   recentActions?: string[];
@@ -23,69 +40,60 @@ interface DashboardProps {
 
 const Dashboard: React.FC<DashboardProps> = ({ user }) => {
   const [data, setData] = useState<DashboardData>({ username: user.username });
+  const [categories, setCategories] = useState<Category[]>([]);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
 
-  const fetchData = async () => {
-    try {
-      const token = localStorage.getItem("accessToken");
-      if (!token) {
-        navigate("/login");
-        return;
-      }
-
-      const userResponse = await axios.get("http://localhost:8080/api/user/me", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const role = userResponse.data.role;
-      const username = userResponse.data.username;
-
-      localStorage.setItem("username", username);
-
-      setIsAdmin(role === "ADMIN");
-      setData((prev) => ({ ...prev, username }));
-
-      if (role === "ADMIN") {
-        const dashboardResponse = await axios.get("http://localhost:8080/api/admin/dashboard", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setData((prev) => ({
-          ...prev,
-          ...dashboardResponse.data,
-        }));
-      } else {
-        // Kullanıcı dashboard’u için eksik API çağrılarını ekle
-        const mostViewedResponse = await axios.get("http://localhost:8080/api/user/most-viewed-passwords", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const featuredResponse = await axios.get("http://localhost:8080/api/user/featured-passwords", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        setData((prev) => ({
-          ...prev,
-          mostViewedPasswords: mostViewedResponse.data,
-          featuredPasswords: featuredResponse.data,
-        }));
-      }
-    } catch (error) {
-      console.error("Veri çekme hatası:", error);
-      setError("Veri çekme hatası oluştu, lütfen tekrar giriş yapın.");
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("refreshToken");
-      localStorage.removeItem("username");
-      navigate("/login");
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // Veri çekme ve yönlendirme mantığı aynı, bu kısımlarda değişiklik yok
   useEffect(() => {
+    const fetchData = async () => {
+        try {
+            const token = localStorage.getItem("accessToken");
+            if (!token) {
+                navigate("/login");
+                return;
+            }
+            const userResponse = await axios.get("http://localhost:8080/api/user/me", {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            
+            const { role, username } = userResponse.data;
+            localStorage.setItem("username", username);
+            const isAdminUser = role === "ADMIN";
+            setIsAdmin(isAdminUser);
+
+            if (isAdminUser) {
+                const dashboardResponse = await axios.get("http://localhost:8080/api/admin/dashboard", {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                setData({ username, ...dashboardResponse.data });
+            } else {
+                const [mostViewedResponse, featuredResponse, categoriesResponse] = await Promise.all([
+                    axios.get("http://localhost:8080/api/user/most-viewed-passwords", { headers: { Authorization: `Bearer ${token}` } }),
+                    axios.get("http://localhost:8080/api/user/featured-passwords", { headers: { Authorization: `Bearer ${token}` } }),
+                    axios.get("http://localhost:8080/api/user/categories", { headers: { Authorization: `Bearer ${token}` } }),
+                ]);
+                setData({
+                    username,
+                    mostViewedPasswords: mostViewedResponse.data,
+                    featuredPasswords: featuredResponse.data,
+                });
+                setCategories(categoriesResponse.data);
+            }
+        } catch (error) {
+            console.error("Veri çekme hatası:", error);
+            setError("Veri alınırken bir sorun oluştu. Lütfen daha sonra tekrar deneyin.");
+            localStorage.clear();
+            navigate("/login");
+        } finally {
+            setLoading(false);
+        }
+    };
     fetchData();
-  }, []);
+  }, [navigate]);
 
   useEffect(() => {
     if (!loading) {
@@ -100,147 +108,142 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
   if (loading) {
     return (
       <div className="flex flex-col min-h-screen bg-gray-100 items-center justify-center">
-        <p>Yükleniyor...</p>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col min-h-screen bg-gray-100 items-center justify-center">
-        <p className="text-red-600">{error}</p>
+      <div className="flex flex-col min-h-screen bg-gray-100 items-center justify-center text-center p-4">
+        <p className="text-red-600 font-semibold text-lg">{error}</p>
+        <button onClick={() => navigate('/login')} className="mt-4 px-5 py-2 bg-blue-600 text-white font-semibold rounded-md shadow-sm hover:bg-blue-700 transition-colors">
+          Giriş Sayfasına Dön
+        </button>
       </div>
     );
   }
 
+  // --- YENİ KURUMSAL TASARIM ---
   return (
-    <div className="flex flex-col min-h-screen bg-gray-100">
+    <div className="flex flex-col min-h-screen bg-gray-100 text-gray-800 font-sans">
       <Navbar username={user.username} profilePicture={user.profilePicture} />
-      <div className="flex flex-1">
+      <div className="flex flex-1 pt-16">
         <Sidebar />
-        <div className="ml-64 p-6 w-full mt-9">
-          <h1 className="text-3xl font-bold mb-6 text-gray-800">
-            Hoş geldin, {data.adminName || data.username}!
-          </h1>
+        <main className="ml-64 p-8 w-full">
           {isAdmin ? (
-            <div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                <div className="bg-white p-6 rounded-lg shadow-lg flex items-center space-x-4">
-                  <div className="text-indigo-600">
-                    <svg
-                      className="w-8 h-8"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M12 11c0-1.1.9-2 2-2s2 .9 2 2-2 4-2 4m0 2v1m-6-9H5v-2a2 2 0 012-2h1m8 0h1a2 2 0 012 2v2h-5m-4 4H5v2a2 2 0 002 2h1m8 0h1a2 2 0 002-2v-2h-5"
-                      />
-                    </svg>
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-700">Toplam Şifre</h3>
-                    <p className="text-2xl font-bold text-gray-900">{data.passwordCount || 0}</p>
-                  </div>
-                </div>
-                <div className="bg-white p-6 rounded-lg shadow-lg flex items-center space-x-4">
-                  <div className="text-indigo-600">
-                    <svg
-                      className="w-8 h-8"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
-                      />
-                    </svg>
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-700">Toplam Kullanıcı</h3>
-                    <p className="text-2xl font-bold text-gray-900">{data.userCount || 0}</p>
-                  </div>
-                </div>
-                <div className="bg-white p-6 rounded-lg shadow-lg">
-                  <h3 className="text-lg font-semibold text-gray-700 mb-3">Son İşlemler</h3>
-                  <ul className="space-y-2">
-                    {data.recentActions && data.recentActions.length > 0 ? (
-                      data.recentActions.map((action, index) => (
-                        <li key={index} className="text-gray-600 flex items-center">
-                          <span className="mr-2 text-indigo-500">•</span>
-                          {action}
-                        </li>
-                      ))
-                    ) : (
-                      <li className="text-gray-600">Son işlem yok</li>
-                    )}
-                  </ul>
+            // --- ADMIN PANELİ KURUMSAL TASARIM ---
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <div className="lg:col-span-3">
+                <h1 className="text-3xl font-bold text-gray-900">Admin Paneli</h1>
+                <p className="text-gray-600 mt-1">Sistem verilerine ve genel istatistiklere hoş geldiniz.</p>
+              </div>
+
+              {/* KPI Kartları */}
+              <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm flex items-center space-x-5">
+                <div className="flex-shrink-0 p-3 bg-blue-100 rounded-full"><LockClosedIcon className="w-7 h-7 text-blue-600"/></div>
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500">Toplam Şifre</h3>
+                  <p className="text-2xl font-bold text-gray-900 mt-1">{data.passwordCount || 0}</p>
                 </div>
               </div>
-              <div className="bg-white p-6 rounded-lg shadow-lg">
-                <h2 className="text-xl font-bold mb-4 text-gray-800">Öne Çıkan Şifreler</h2>
-                <ul className="space-y-2">
+
+              <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm flex items-center space-x-5">
+                <div className="flex-shrink-0 p-3 bg-blue-100 rounded-full"><UsersIcon className="w-7 h-7 text-blue-600"/></div>
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500">Toplam Kullanıcı</h3>
+                  <p className="text-2xl font-bold text-gray-900 mt-1">{data.userCount || 0}</p>
+                </div>
+              </div>
+              
+              {/* Bu kartı boş bırakabilir veya başka bir KPI ekleyebilirsiniz */}
+               <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm flex items-center space-x-5">
+                <div className="flex-shrink-0 p-3 bg-blue-100 rounded-full"><ClockIcon className="w-7 h-7 text-blue-600"/></div>
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500">Sistem Zamanı</h3>
+                  <p className="text-2xl font-bold text-gray-900 mt-1">{new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}</p>
+                </div>
+              </div>
+
+              <div className="lg:col-span-2 bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Öne Çıkan Şifreler</h3>
+                 <div className="space-y-3">
                   {data.featuredPasswords && data.featuredPasswords.length > 0 ? (
                     data.featuredPasswords.map((password, index) => (
-                      <li key={index} className="text-gray-600 flex items-center">
-                        <span className="mr-2 text-indigo-500">•</span>
-                        {password}
+                      <div key={index} className="flex items-center p-3 bg-gray-50 rounded-md">
+                        <StarIcon className="w-5 h-5 text-yellow-500 mr-3"/>
+                        <p className="font-medium text-gray-700">{password}</p>
+                      </div>
+                    ))
+                  ) : <p className="text-gray-500">Öne çıkan şifre bulunmuyor.</p>}
+                </div>
+              </div>
+
+              <div className="lg:col-span-1 bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Son İşlemler</h3>
+                <ul className="space-y-4">
+                  {data.recentActions && data.recentActions.length > 0 ? (
+                    data.recentActions.slice(0, 5).map((action, index) => ( // Sadece ilk 5'i göster
+                      <li key={index} className="flex items-start text-sm">
+                        <div className="flex-shrink-0 w-4 h-4 bg-blue-200 rounded-full mt-1 mr-3"></div>
+                        <span className="text-gray-600">{action}</span>
                       </li>
                     ))
-                  ) : (
-                    <li className="text-gray-600">Öne çıkan şifre yok</li>
-                  )}
+                  ) : <p className="text-gray-500">Son işlem bulunamadı.</p>}
                 </ul>
               </div>
+
             </div>
           ) : (
-            <div>
-              <h2 className="text-2xl font-semibold text-gray-700 mb-4">
-                Kullanıcı Dashboard
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Sık Görüntülenen Şifreler */}
-                <div className="bg-white p-6 rounded-lg shadow-lg">
-                  <h3 className="text-lg font-semibold text-gray-700 mb-3">Sık Görüntülenen Şifreler</h3>
-                  <ul className="space-y-2">
-                    {data.mostViewedPasswords && data.mostViewedPasswords.length > 0 ? (
-                      data.mostViewedPasswords.map((password, index) => (
-                        <li key={index} className="text-gray-600 flex items-center">
-                          <span className="mr-2 text-indigo-500">•</span>
-                          {password}
-                        </li>
-                      ))
-                    ) : (
-                      <li className="text-gray-600">Henüz sık görüntülenen şifre yok</li>
-                    )}
-                  </ul>
+            // --- KULLANICI PANELİ KURUMSAL TASARIM ---
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <div className="lg:col-span-3">
+                <h1 className="text-3xl font-bold text-gray-900">Hoş Geldiniz, {data.username}</h1>
+                <p className="text-gray-600 mt-1">Şifrelerinizi yönetmeye başlayın.</p>
+              </div>
+
+              <div className="lg:col-span-2 bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+                 <h3 className="text-lg font-semibold text-gray-900 mb-5">Kategoriler</h3>
+                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {categories.length > 0 ? categories.map((cat) => (
+                    <button key={cat.id} onClick={() => navigate('/passwords')} className="group flex items-center justify-between text-left p-4 bg-gray-50 hover:bg-blue-100 hover:shadow-md border border-gray-200 rounded-lg transition-all duration-300">
+                       <div className="flex items-center">
+                         <FolderIcon className="w-6 h-6 text-blue-500 mr-4"/>
+                         <span className="font-semibold text-gray-800">{cat.name}</span>
+                       </div>
+                       <ChevronRightIcon className="w-5 h-5 text-gray-400 group-hover:text-blue-600 transition-colors"/>
+                    </button>
+                  )) : <p className="text-gray-500 sm:col-span-2">Henüz kategori oluşturulmamış.</p>}
                 </div>
-                {/* Öne Çıkarılan Şifreler */}
-                <div className="bg-white p-6 rounded-lg shadow-lg">
-                  <h3 className="text-lg font-semibold text-gray-700 mb-3">Öne Çıkarılan Şifreler (Favoriler)</h3>
-                  <ul className="space-y-2">
-                    {data.featuredPasswords && data.featuredPasswords.length > 0 ? (
-                      data.featuredPasswords.map((password, index) => (
-                        <li key={index} className="text-gray-600 flex items-center">
-                          <span className="mr-2 text-indigo-500">•</span>
-                          {password}
-                        </li>
-                      ))
-                    ) : (
-                      <li className="text-gray-600">Henüz favori şifre yok</li>
-                    )}
-                  </ul>
-                </div>
+              </div>
+
+              <div className="lg:col-span-1 space-y-8">
+                 <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Favoriler</h3>
+                    <div className="space-y-3">
+                      {data.featuredPasswords && data.featuredPasswords.length > 0 ? data.featuredPasswords.map((pw, i) => (
+                        <div key={i} className="flex items-center p-3 bg-gray-50 rounded-md">
+                          <StarIcon className="w-5 h-5 text-yellow-500 mr-3"/>
+                          <p className="font-medium text-gray-700 truncate">{pw}</p>
+                        </div>
+                      )) : <p className="text-gray-500">Favori şifre yok.</p>}
+                    </div>
+                 </div>
+                 <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Sık Görüntülenenler</h3>
+                    <div className="space-y-3">
+                      {data.mostViewedPasswords && data.mostViewedPasswords.length > 0 ? data.mostViewedPasswords.map((pw, i) => (
+                        <div key={i} className="flex items-center p-3 bg-gray-50 rounded-md">
+                          <EyeIcon className="w-5 h-5 text-blue-500 mr-3"/>
+                          <p className="font-medium text-gray-700 truncate">{pw}</p>
+                        </div>
+                      )) : <p className="text-gray-500">Sık görüntülenen şifre yok.</p>}
+                    </div>
+                 </div>
               </div>
             </div>
           )}
-        </div>
+        </main>
       </div>
     </div>
   );

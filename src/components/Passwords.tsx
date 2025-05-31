@@ -20,6 +20,7 @@ interface Password {
   password: string;
   description: string;
   status: string;
+  isFeatured: boolean;
 }
 
 interface PasswordsProps {
@@ -239,10 +240,10 @@ const handleUpdatePassword = async () => {
     }
   };
 
- const sendVerificationCode = async (passwordId: number, isForUpdate: boolean = false) => {
+ const sendVerificationCode = async (passwordId: number, context: "view" | "update" = "view") => {
   try {
     const token = localStorage.getItem("accessToken");
-    console.log("Token:", token); // Token'ı konsola yazdır
+    console.log("Token:", token);
     if (!token) {
       console.log("Token eksik, login sayfasına yönlendiriliyor...");
       navigate("/login");
@@ -251,14 +252,14 @@ const handleUpdatePassword = async () => {
 
     const response = await axios.post(
       "http://localhost:8080/api/auth/user/send-verification-code",
-      {},
+      { context }, // Context bilgisini gönder
       {
         headers: { Authorization: `Bearer ${token}` },
       }
     );
 
     setCurrentPasswordId(passwordId);
-    if (isForUpdate) {
+    if (context === "update") {
       setUpdateStep("verify");
     } else {
       setShowVerifyModal(true);
@@ -496,33 +497,64 @@ const verifyCodeAndProceed = async () => {
                           </span>
                         )
                       ) : (
-                        <button
-                          onClick={() => sendVerificationCode(password.id)}
-                          className="text-blue-500 hover:underline"
-                        >
-                          Gör
-                        </button>
+                       <button
+  onClick={() => sendVerificationCode(password.id, "view")}
+  className="text-blue-500 hover:underline"
+>
+  Gör
+</button>
                       )}
                     </td>
                     <td className="p-2">{password.description}</td>
-                    <td className="p-2">
-                      <button
-                        onClick={() => {
-                          setUpdatePasswordData(password);
-                          setShowUpdateModal(true);
-                          setUpdateStep("request");
-                        }}
-                        className="bg-blue-500 text-white px-2 py-1 rounded mr-2 hover:bg-blue-600"
-                      >
-                        Güncelle
-                      </button>
-                      <button
-                        onClick={() => handleDeletePassword(password.id)}
-                        className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600"
-                      >
-                        Sil
-                      </button>
-                    </td>
+                  <td className="p-2">
+  <button
+    onClick={() => {
+      setUpdatePasswordData(password);
+      setShowUpdateModal(true);
+      setUpdateStep("request");
+    }}
+    className="bg-blue-500 text-white px-2 py-1 rounded mr-2 hover:bg-blue-600"
+  >
+    Güncelle
+  </button>
+  <button
+    onClick={() => handleDeletePassword(password.id)}
+    className="bg-red-500 text-white px-2 py-1 rounded mr-2 hover:bg-red-600"
+  >
+    Sil
+  </button>
+  <button
+    onClick={async () => {
+      try {
+        const token = localStorage.getItem("accessToken");
+        await axios.put(
+          `http://localhost:8080/api/auth/user/passwords/${password.id}/toggle-featured`,
+          { isFeatured: !password.isFeatured },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        setPasswords((prev) =>
+          prev.map((p) =>
+            p.id === password.id ? { ...p, isFeatured: !p.isFeatured } : p
+          )
+        );
+        setFilteredPasswords((prev) =>
+          prev.map((p) =>
+            p.id === password.id ? { ...p, isFeatured: !p.isFeatured } : p
+          )
+        );
+      } catch (err) {
+        setError("Öne çıkarma işlemi başarısız.");
+      }
+    }}
+    className={`px-2 py-1 rounded text-white ${
+      password.isFeatured
+        ? "bg-yellow-500 hover:bg-yellow-600"
+        : "bg-gray-500 hover:bg-gray-600"
+    }`}
+  >
+    {password.isFeatured ? "Öne Çıkarmayı Kaldır" : "Öne Çıkar"}
+  </button>
+</td>
                   </tr>
                 ))}
               </tbody>
@@ -637,13 +669,13 @@ const verifyCodeAndProceed = async () => {
                   className="w-full p-2 mb-4 border rounded"
                 />
                 {updateStep === "request" && (
-                  <button
-                    onClick={() => sendVerificationCode(updatePasswordData.id)}
-                    className="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700"
-                  >
-                    Şifre Değiştirme İsteği Gönder
-                  </button>
-                )}
+  <button
+    onClick={() => sendVerificationCode(updatePasswordData.id, "update")}
+    className="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700"
+  >
+    Şifre Değiştirme İsteği Gönder
+  </button>
+)}
                 {updateStep === "verify" && (
                   <>
                     <input

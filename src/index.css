@@ -1,3 +1,17 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.animate-matrix-type {
+  position: relative;
+}
+.animate-matrix-type::after {
+  content: '|';
+  position: absolute;
+  right: -0.5rem;
+  color: #00ff00;
+  animation: blink 0.5s step-end infinite;
+}
+@keyframes blink {
+  50% { opacity: 0; }
+}
