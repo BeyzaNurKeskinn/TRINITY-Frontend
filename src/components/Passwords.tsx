@@ -55,7 +55,10 @@ const Passwords: React.FC<PasswordsProps> = ({ user }) => {
   const [visiblePasswords, setVisiblePasswords] = useState<{ [key: number]: boolean }>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [updateStep, setUpdateStep] = useState<"request" | "verify" | "setNew">("request"); // Yeni adım durumu
+  const [errors, setErrors] = useState<string[]>([]); // Yeni hata state'i
+  const [updateStep, setUpdateStep] = useState<"request" | "verify" | "setNew">("request");
+  const [highlightedPasswordId, setHighlightedPasswordId] = useState<number | null>(null);
+  const [addPulse, setAddPulse] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -89,22 +92,33 @@ const Passwords: React.FC<PasswordsProps> = ({ user }) => {
           return;
         }
 
+        const passedCategory = location.state?.selectedCategory as Category | null;
+
         let url = "http://localhost:8080/api/user/passwords";
-        if (selectedCategory && selectedCategory.name !== "Tümü") {
+        if (passedCategory && passedCategory.name !== "Tümü") {
+          setSelectedCategory(passedCategory);
+          url = `http://localhost:8080/api/user/passwords/by-category?category=${passedCategory.name}`;
+        } else if (selectedCategory && selectedCategory.name !== "Tümü") {
           url = `http://localhost:8080/api/user/passwords/by-category?category=${selectedCategory.name}`;
         }
 
         const response = await axios.get(url, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        setPasswords(response.data);
-        setFilteredPasswords(response.data);
+        console.log("Sunucudan gelen şifreler:", response.data);
+        // Mapping: featured -> isFeatured
+        const mappedPasswords = response.data.map((p: any) => ({
+          ...p,
+          isFeatured: typeof p.isFeatured !== "undefined" ? p.isFeatured : p.featured,
+        }));
+        setPasswords(mappedPasswords);
+        setFilteredPasswords(mappedPasswords);
 
         const uniqueCategoryIds = [...new Set(response.data.map((p: Password) => p.categoryId))];
         const userCats = categories.filter((cat) => uniqueCategoryIds.includes(cat.id));
         setUserCategories(userCats);
 
-        if (!selectedCategory && location.pathname === "/user/passwords" && response.data.length > 0) {
+        if (!passedCategory && !selectedCategory && response.data.length > 0) {
           setSelectedCategory({ id: -1, name: "Tümü", description: "Tüm şifreler", status: "ACTIVE" });
         }
       } catch (err: any) {
@@ -115,7 +129,25 @@ const Passwords: React.FC<PasswordsProps> = ({ user }) => {
     };
 
     fetchPasswords();
-  }, [selectedCategory, categories, navigate, location.pathname]);
+  }, [selectedCategory, categories, navigate, location.state]);
+
+  useEffect(() => {
+    // Eğer Dashboard'dan selectedPassword ile gelindiyse, o şifreyi vurgula
+    const selectedPassword = location.state?.selectedPassword as Password | undefined;
+    if (selectedPassword && selectedPassword.id) {
+      setTimeout(() => {
+        setHighlightedPasswordId(selectedPassword.id);
+        // Vurguyu 2 saniye sonra kaldır
+        setTimeout(() => setHighlightedPasswordId(null), 2000);
+      }, 300);
+    }
+  }, [location.state]);
+
+  useEffect(() => {
+    setAddPulse(true);
+    const timer = setTimeout(() => setAddPulse(false), 3000);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleSearch = () => {
     if (!searchTerm.trim()) {
@@ -142,9 +174,38 @@ const Passwords: React.FC<PasswordsProps> = ({ user }) => {
   };
 
   const handleAddPassword = async () => {
+    const newErrors: string[] = [];
+
+    // İstemci tarafı doğrulaması
+    if (!newPassword.categoryId) {
+      newErrors.push("Kategori seçimi zorunludur.");
+    }
+    if (!newPassword.title.trim()) {
+      newErrors.push("Başlık boş olamaz.");
+    } else if (newPassword.title.length < 3 || newPassword.title.length > 50) {
+      newErrors.push("Başlık 3 ile 50 karakter arasında olmalıdır.");
+    }
+    if (!newPassword.password.trim()) {
+      newErrors.push("Şifre boş olamaz.");
+    } else if (newPassword.password.length < 6) {
+      newErrors.push("Şifre en az 6 karakter olmalıdır.");
+    }
+    if (newPassword.username && newPassword.username.length > 50) {
+      newErrors.push("Kullanıcı adı 50 karakterden uzun olamaz.");
+    }
+    if (newPassword.description && newPassword.description.length > 200) {
+      newErrors.push("Açıklama 200 karakterden uzun olamaz.");
+    }
+
+    if (newErrors.length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
     try {
       const token = localStorage.getItem("accessToken");
       if (!token) {
+        setErrors(["Oturumunuz sona ermiş. Lütfen tekrar giriş yapın."]);
         navigate("/login");
         return;
       }
@@ -155,66 +216,104 @@ const Passwords: React.FC<PasswordsProps> = ({ user }) => {
 
       setShowAddModal(false);
       setNewPassword({ categoryId: "", title: "", username: "", password: "", description: "", status: "ACTIVE" });
+      setErrors([]); // Hataları sıfırla
 
       const response = await axios.get("http://localhost:8080/api/user/passwords", {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setPasswords(response.data);
-      setFilteredPasswords(response.data);
-      const uniqueCategoryIds = [...new Set(response.data.map((p: Password) => p.categoryId))];
+      // Mapping: featured -> isFeatured
+      const mappedPasswords = response.data.map((p: any) => ({
+        ...p,
+        isFeatured: typeof p.isFeatured !== "undefined" ? p.isFeatured : p.featured,
+      }));
+      setPasswords(mappedPasswords);
+      setFilteredPasswords(mappedPasswords);
+      const uniqueCategoryIds = [...new Set(mappedPasswords.map((p: Password) => p.categoryId))];
       setUserCategories(categories.filter((cat) => uniqueCategoryIds.includes(cat.id)));
     } catch (err: any) {
-      setError(err.response?.data?.message || "Şifre eklenirken bir hata oluştu.");
+      const backendMessage = err.response?.data?.message || "Şifre eklenirken bir hata oluştu.";
+      if (err.response?.status === 400) {
+        if (backendMessage.includes("Kategori")) {
+          newErrors.push("Geçersiz kategori seçimi.");
+        } else if (backendMessage.includes("Başlık")) {
+          newErrors.push("Başlık geçersiz veya çok uzun.");
+        } else if (backendMessage.includes("Şifre")) {
+          newErrors.push("Şifre geçersiz veya çok kısa.");
+        } else {
+          newErrors.push(backendMessage);
+        }
+      } else if (err.response?.status === 401) {
+        newErrors.push("Yetkisiz işlem. Lütfen tekrar giriş yapın.");
+        navigate("/login");
+      } else {
+        newErrors.push(backendMessage);
+      }
+      setErrors(newErrors);
     }
   };
 
-const handleUpdatePassword = async () => {
-  if (!updatePasswordData) return;
+  const handleUpdatePassword = async () => {
+    if (!updatePasswordData) return;
 
-  try {
-    const token = localStorage.getItem("accessToken");
-    if (!token) {
-      navigate("/login");
-      return;
-    }
-
-    await axios.put(
-      `http://localhost:8080/api/user/passwords/${updatePasswordData.id}`,
-      { ...updatePasswordData, password: newPasswordInput, status: "ACTIVE" },
-      {
-        headers: { Authorization: `Bearer ${token}` },
+    try {
+      const token = localStorage.getItem("accessToken");
+      if (!token) {
+        navigate("/login");
+        return;
       }
-    );
 
-    console.log("Güncellenen şifre ID:", updatePasswordData.id, "Yeni şifre:", newPasswordInput);
+      // Güncellenecek veriyi hazırla
+      const updatedData = {
+        categoryId: updatePasswordData.categoryId,
+        title: updatePasswordData.title,
+        username: updatePasswordData.username,
+        description: updatePasswordData.description,
+        status: "ACTIVE",
+        // Şifre sadece newPasswordInput doluysa gönderilsin
+        ...(newPasswordInput && { password: newPasswordInput }),
+      };
 
-    setVisiblePasswords((prev) => {
-      const newVisible = { ...prev };
-      delete newVisible[updatePasswordData.id];
-      console.log("visiblePasswords güncellendi:", newVisible);
-      return newVisible;
-    });
+      console.log("Güncellenen veri:", updatedData);
 
-    setShowUpdateModal(false);
-    setUpdatePasswordData(null);
-    setUpdateStep("request");
-    setNewPasswordInput("");
-    setVerifyCode("");
+      await axios.put(
+        `http://localhost:8080/api/user/passwords/${updatePasswordData.id}`,
+        updatedData,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
 
-    const response = await axios.get("http://localhost:8080/api/user/passwords", {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    console.log("Yeni yüklenen passwords:", response.data);
-    setPasswords(response.data);
-    setFilteredPasswords(response.data);
-    setFilteredPasswords((prev) => [...prev]); // Render’ı zorla
-    const uniqueCategoryIds = [...new Set(response.data.map((p: Password) => p.categoryId))];
-    setUserCategories(categories.filter((cat) => uniqueCategoryIds.includes(cat.id)));
-  } catch (err: any) {
-    setError(err.response?.data?.message || "Şifre güncellenirken bir hata oluştu.");
-  }
-};
+      // Şifre görünürlüğünü sıfırla
+      setVisiblePasswords((prev) => {
+        const newVisible = { ...prev };
+        delete newVisible[updatePasswordData.id];
+        return newVisible;
+      });
 
+      // Modalı kapat ve durumları sıfırla
+      setShowUpdateModal(false);
+      setUpdatePasswordData(null);
+      setUpdateStep("request");
+      setNewPasswordInput("");
+      setVerifyCode("");
+
+      // Şifreleri yeniden yükle
+      const response = await axios.get("http://localhost:8080/api/user/passwords", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      // Mapping: featured -> isFeatured
+      const mappedPasswords = response.data.map((p: any) => ({
+        ...p,
+        isFeatured: typeof p.isFeatured !== "undefined" ? p.isFeatured : p.featured,
+      }));
+      setPasswords(mappedPasswords);
+      setFilteredPasswords(mappedPasswords);
+      const uniqueCategoryIds = [...new Set(mappedPasswords.map((p: Password) => p.categoryId))];
+      setUserCategories(categories.filter((cat) => uniqueCategoryIds.includes(cat.id)));
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Şifre güncellenirken bir hata oluştu.");
+    }
+  };
 
   const handleDeletePassword = async (id: number) => {
     try {
@@ -240,118 +339,121 @@ const handleUpdatePassword = async () => {
     }
   };
 
- const sendVerificationCode = async (passwordId: number, context: "view" | "update" = "view") => {
-  try {
-    const token = localStorage.getItem("accessToken");
-    console.log("Token:", token);
-    if (!token) {
-      console.log("Token eksik, login sayfasına yönlendiriliyor...");
-      navigate("/login");
-      return;
-    }
-
-    const response = await axios.post(
-      "http://localhost:8080/api/auth/user/send-verification-code",
-      { context }, // Context bilgisini gönder
-      {
-        headers: { Authorization: `Bearer ${token}` },
+  const sendVerificationCode = async (passwordId: number, context: "view" | "update" = "view") => {
+    try {
+      const token = localStorage.getItem("accessToken");
+      console.log("Token:", token);
+      if (!token) {
+        console.log("Token eksik, login sayfasına yönlendiriliyor...");
+        navigate("/login");
+        return;
       }
-    );
 
-    setCurrentPasswordId(passwordId);
-    if (context === "update") {
-      setUpdateStep("verify");
-    } else {
-      setShowVerifyModal(true);
-    }
-    console.log("Sunucu yanıtı:", response.data);
-  } catch (err: any) {
-    const errorMessage = err.response?.data?.message || err.response?.data || "Doğrulama kodu gönderilirken bir hata oluştu.";
-    setError(errorMessage);
-    console.error("Hata detayı:", err.response ? err.response.data : err.message);
-    if (err.response?.status === 401 || err.response?.status === 403) {
-      console.log("401/403 hatası alındı, token siliniyor ve login sayfasına yönlendiriliyor...");
-      localStorage.removeItem("accessToken");
-      navigate("/login");
-    }
-  }
-};
-useEffect(() => {
-  console.log("Passwords state güncellendi:", passwords);
-}, [passwords]);
-const verifyCodeAndProceed = async () => {
-  try {
-    const token = localStorage.getItem("accessToken");
-    if (!token) {
-      navigate("/login");
-      return;
-    }
-
-    console.log("Gönderilen doğrulama kodu:", verifyCode);
-    if (!verifyCode || verifyCode.length !== 6 || !/^\d+$/.test(verifyCode)) {
-      setError("Lütfen 6 haneli bir doğrulama kodu girin.");
-      return;
-    }
-
-    await axios.post(
-      "http://localhost:8080/api/auth/user/verify-code",
-      { code: verifyCode },
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      }
-    );
-    console.log("Doğrulama başarılı");
-
-    if (currentPasswordId !== null) {
-      console.log("Şifre alma isteği yapılıyor, ID:", currentPasswordId);
-      const passwordResponse = await axios.get(
-        `http://localhost:8080/api/auth/user/password/${currentPasswordId}`,
+      const response = await axios.post(
+        "http://localhost:8080/api/auth/user/send-verification-code",
+        { context },
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      // Yanıt artık { password: "değer" } formatında
-      console.log("Şifre alma yanıtı (JSON):", passwordResponse.data);
 
-      // *** DEĞİŞİKLİK: Yanıttaki .password alanını al ***
-      const decryptedPassword = passwordResponse.data.password;
-
-      // Kontrolü bu değer üzerinden yap
-      if (decryptedPassword !== null && decryptedPassword !== undefined) {
-        // Şifre görünür yap
-        setVisiblePasswords((prev) => ({ ...prev, [currentPasswordId]: true }));
-        
-        // State'deki şifre listesini güncelle
-        setPasswords((prevPasswords) =>
-          prevPasswords.map((p) =>
-            p.id === currentPasswordId ? { ...p, password: decryptedPassword } : p
-          )
-        );
-        
-        // Arama sonuçlarını da güncelle (eğer kullanılıyorsa)
-         setFilteredPasswords((prevFiltered) =>
-          prevFiltered.map((p) =>
-            p.id === currentPasswordId ? { ...p, password: decryptedPassword } : p
-          )
-        );
+      setCurrentPasswordId(passwordId);
+      if (context === "update") {
+        setUpdateStep("verify");
       } else {
-        console.error("API'den gelen şifre değeri boş veya geçersiz:", passwordResponse.data);
-        setError("Şifre alınamadı, lütfen tekrar deneyin.");
+        setShowVerifyModal(true);
       }
-      setShowVerifyModal(false);
+      console.log("Sunucu yanıtı:", response.data);
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || err.response?.data || "Doğrulama kodu gönderilirken bir hata oluştu.";
+      setError(errorMessage);
+      console.error("Hata detayı:", err.response ? err.response.data : err.message);
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        console.log("401/403 hatası alındı, token siliniyor ve login sayfasına yönlendiriliyor...");
+        localStorage.removeItem("accessToken");
+        navigate("/login");
+      }
     }
+  };
 
-    // Güncelleme adımlarını yöneten kısım
-    if (currentPasswordId === updatePasswordData?.id) {
-      setUpdateStep("setNew");
+  useEffect(() => {
+    console.log("Passwords state güncellendi:", passwords);
+  }, [passwords]);
+
+  const verifyCodeAndProceed = async () => {
+    try {
+      const token = localStorage.getItem("accessToken");
+      if (!token) {
+        navigate("/login");
+        return;
+      }
+
+      console.log("Gönderilen doğrulama kodu:", verifyCode);
+      if (!verifyCode || verifyCode.length !== 6 || !/^\d+$/.test(verifyCode)) {
+        setError("Lütfen 6 haneli bir doğrulama kodu girin.");
+        return;
+      }
+
+      await axios.post(
+        "http://localhost:8080/api/auth/user/verify-code",
+        { code: verifyCode },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      console.log("Doğrulama başarılı");
+
+      if (currentPasswordId !== null) {
+        console.log("Şifre alma isteği yapılıyor, ID:", currentPasswordId);
+        const passwordResponse = await axios.get(
+          `http://localhost:8080/api/auth/user/password/${currentPasswordId}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        // Yanıt artık { password: "değer" } formatında
+        console.log("Şifre alma yanıtı (JSON):", passwordResponse.data);
+
+        // DEĞİŞİKLİK: Yanıttaki .password alanını al
+        const decryptedPassword = passwordResponse.data.password;
+
+        // Kontrolü bu değer üzerinden yap
+        if (decryptedPassword !== null && decryptedPassword !== undefined) {
+          // Şifre görünür yap
+          setVisiblePasswords((prev) => ({ ...prev, [currentPasswordId]: true }));
+
+          // State'deki şifre listesini güncelle
+          setPasswords((prevPasswords) =>
+            prevPasswords.map((p) =>
+              p.id === currentPasswordId ? { ...p, password: decryptedPassword } : p
+            )
+          );
+
+          // Arama sonuçlarını da güncelle (eğer kullanılıyorsa)
+          setFilteredPasswords((prevFiltered) =>
+            prevFiltered.map((p) =>
+              p.id === currentPasswordId ? { ...p, password: decryptedPassword } : p
+            )
+          );
+        } else {
+          console.error("API'den gelen şifre değeri boş veya geçersiz:", passwordResponse.data);
+          setError("Şifre alınamadı, lütfen tekrar deneyin.");
+        }
+        setShowVerifyModal(false);
+      }
+
+      // Güncelleme adımlarını yöneten kısım
+      if (currentPasswordId === updatePasswordData?.id) {
+        setUpdateStep("setNew");
+      }
+
+      setVerifyCode("");
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Doğrulama başarısız.");
+      console.error("Doğrulama hatası:", err.response ? err.response.data : err.message);
     }
+  };
 
-    setVerifyCode("");
-  } catch (err: any) {
-    setError(err.response?.data?.message || "Doğrulama başarısız.");
-    console.error("Doğrulama hatası:", err.response ? err.response.data : err.message);
-  }
-};
   const categoryColors = [
     "bg-red-200",
     "bg-blue-200",
@@ -373,7 +475,7 @@ const verifyCodeAndProceed = async () => {
 
   if (error) {
     return (
-      <div className="flex flex-col min-h-screen bg-gray-100 items-center justify-center">
+      <div className="flex flex-col min-h-screen bg-gradient-to-br from-gray-50 to-blue-100 items-center justify-center">
         <p className="text-red-600">{error}</p>
         <button
           onClick={() => setError(null)}
@@ -386,14 +488,14 @@ const verifyCodeAndProceed = async () => {
   }
 
   return (
-   <div className="flex flex-col min-h-screen bg-gray-100">
-    <Navbar username={user.username} profilePicture={user.profilePicture} />
-    <div className="flex flex-1">
-      <Sidebar />
-      <div className="ml-64 p-6 w-full mt-2">
-        <h1 className="text-3xl font-bold text-gray-800 mb-6">Şifrelerim</h1>
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-gray-50 to-blue-100">
+      <Navbar username={user.username} profilePicture={user.profilePicture} />
+      <div className="flex flex-1">
+        <Sidebar />
+        <div className="ml-64 p-6 w-full mt-8">
+          <h1 className="text-3xl font-bold mb-6 text-gray-900 animate-fade-in">Şifrelerim</h1>
 
-          <div className="flex flex-wrap gap-4 mb-6">
+          <div className="flex flex-wrap gap-4 mb-7">
             <div
               onClick={() => setSelectedCategory({ id: -1, name: "Tümü", description: "Tüm şifreler", status: "ACTIVE" })}
               className={`bg-gray-200 p-4 rounded-lg cursor-pointer shadow hover:shadow-lg transition transform hover:scale-105 ${
@@ -417,160 +519,179 @@ const verifyCodeAndProceed = async () => {
             ))}
           </div>
 
-          <div className="flex items-center mb-6 space-x-4">
-            <div className="flex items-center space-x-2">
-              <input
-                type="text"
-                placeholder="Şifre ara (başlık, kullanıcı adı, açıklama)"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                onKeyPress={handleKeyPress}
-                className="w-80 p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600"
-              />
+          <div className="flex items-center mb-6 justify-end w-full space-x-2">
+            <input
+              type="text"
+              placeholder="Şifre ara (başlık, kullanıcı adı, açıklama)"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onKeyPress={handleKeyPress}
+              className="w-80 p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600"
+            />
+            <button
+              onClick={handleSearch}
+              className="bg-gray-800 text-white px-4 py-2 rounded-lg hover:bg-gray-900"
+            >
+              Ara
+            </button>
+            {searchTerm && (
               <button
-                onClick={handleSearch}
-                className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700"
+                onClick={clearSearch}
+                className="bg-gray-300 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-400"
               >
-                Ara
+                Temizle
               </button>
-              {searchTerm && (
-                <button
-                  onClick={clearSearch}
-                  className="bg-gray-300 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-400"
-                >
-                  Temizle
-                </button>
-              )}
-            </div>
+            )}
             <button
               onClick={() => setShowAddModal(true)}
-              className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700"
+              className={`bg-gray-800 text-white px-4 py-2 rounded-lg hover:bg-gray-900 ${addPulse ? "animate-pulse" : ""}`}
             >
               Yeni Şifre Ekle
             </button>
           </div>
 
-      {filteredPasswords.length > 0 ? (
-          <div className="bg-white p-6 rounded-lg shadow-lg">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="bg-gray-100">
-                  <th className="p-2">Başlık</th>
-                  <th className="p-2">Kullanıcı Adı</th>
-                  <th className="p-2">Şifre</th>
-                  <th className="p-2">Açıklama</th>
-                  <th className="p-2">İşlemler</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredPasswords.map((password) => (
-                  <tr key={password.id} className="border-b">
-                    <td className="p-2">{password.title}</td>
-                    <td className="p-2">{password.username}</td>
-                    <td className="p-2">
+          {filteredPasswords.length > 0 ? (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {filteredPasswords.map((password) => (
+                <div
+                  key={password.id}
+                  className={`relative bg-blue-50 dark:bg-slate-900 rounded-xl shadow p-4 flex flex-row justify-between gap-4 border border-gray-200 transition-transform duration-300 hover:scale-105 hover:shadow-lg text-sm min-h-[120px] ${
+                    password.isFeatured ? "border-yellow-300 ring-1 ring-yellow-200" : "border-gray-200"
+                  } ${highlightedPasswordId === password.id ? "ring-4 ring-blue-400 bg-blue-100 animate-pulse" : ""}`}
+                >
+                  {/* Sol: İçerik */}
+                  <div className="flex-1 min-w-0">
+                    {password.isFeatured && (
+                      <span className="absolute top-2 right-2 text-yellow-400 text-lg animate-pulse-glow">★</span>
+                    )}
+                    <h2 className="text-base font-semibold text-gray-900 dark:text-white truncate">{password.title}</h2>
+                    <p className="text-gray-500 text-xs truncate">{password.username}</p>
+                    <p className="text-gray-700 dark:text-gray-200 line-clamp-2 min-h-[1.5rem]">{password.description}</p>
+                    {visiblePasswords[password.id] && password.password && (
+                      <div className="mt-1 text-gray-800 dark:text-gray-100 bg-gray-50 dark:bg-gray-800 rounded p-1 text-xs select-all">
+                        {password.password}
+                      </div>
+                    )}
+                  </div>
+                  {/* Sağ: Butonlar */}
+                  <div className="flex flex-col items-end gap-2 min-w-[120px]">
+                    {/* Gör/Gizle ve Kopyala yan yana */}
+                    <div className="flex flex-row gap-2 w-full">
                       {visiblePasswords[password.id] ? (
-                        password.password ? (
-                          <div className="flex items-center">
-                            <span className="mr-2">{password.password}</span>
-                            <button
-                              onClick={() => {
-                                setVisiblePasswords((prev) => {
-                                  const newVisible = { ...prev };
-                                  delete newVisible[password.id];
-                                  return newVisible;
-                                });
-                              }}
-                              className="text-gray-500 hover:text-gray-700 focus:outline-none w-6 h-6 flex items-center justify-center rounded-full border border-gray-300 hover:bg-gray-100"
-                            >
-                              ✕
-                            </button>
-                          </div>
-                        ) : (
-                          <span className="text-red-500">
-                            Şifre yüklenemedi{" "}
-                            <span
-                              className="text-blue-500 cursor-pointer hover:underline"
-                              onClick={() => console.log("Boş şifre durumu:", { id: password.id, password: password.password })}
-                            >
-                              [Debug]
-                            </span>
-                          </span>
-                        )
+                        <button
+                          onClick={() => {
+                            setVisiblePasswords((prev) => {
+                              const newVisible = { ...prev };
+                              delete newVisible[password.id];
+                              return newVisible;
+                            });
+                          }}
+                          className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-0.5 rounded transition text-xs w-full"
+                        >
+                          Gizle
+                        </button>
                       ) : (
-                       <button
-  onClick={() => sendVerificationCode(password.id, "view")}
-  className="text-blue-500 hover:underline"
->
-  Gör
-</button>
+                        <button
+                          onClick={() => sendVerificationCode(password.id, "view")}
+                          className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-0.5 rounded transition text-xs w-full"
+                        >
+                          Gör
+                        </button>
                       )}
-                    </td>
-                    <td className="p-2">{password.description}</td>
-                  <td className="p-2">
-  <button
-    onClick={() => {
-      setUpdatePasswordData(password);
-      setShowUpdateModal(true);
-      setUpdateStep("request");
-    }}
-    className="bg-blue-500 text-white px-2 py-1 rounded mr-2 hover:bg-blue-600"
-  >
-    Güncelle
-  </button>
-  <button
-    onClick={() => handleDeletePassword(password.id)}
-    className="bg-red-500 text-white px-2 py-1 rounded mr-2 hover:bg-red-600"
-  >
-    Sil
-  </button>
-  <button
-    onClick={async () => {
-      try {
-        const token = localStorage.getItem("accessToken");
-        await axios.put(
-          `http://localhost:8080/api/auth/user/passwords/${password.id}/toggle-featured`,
-          { isFeatured: !password.isFeatured },
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        setPasswords((prev) =>
-          prev.map((p) =>
-            p.id === password.id ? { ...p, isFeatured: !p.isFeatured } : p
-          )
-        );
-        setFilteredPasswords((prev) =>
-          prev.map((p) =>
-            p.id === password.id ? { ...p, isFeatured: !p.isFeatured } : p
-          )
-        );
-      } catch (err) {
-        setError("Öne çıkarma işlemi başarısız.");
-      }
-    }}
-    className={`px-2 py-1 rounded text-white ${
-      password.isFeatured
-        ? "bg-yellow-500 hover:bg-yellow-600"
-        : "bg-gray-500 hover:bg-gray-600"
-    }`}
-  >
-    {password.isFeatured ? "Öne Çıkarmayı Kaldır" : "Öne Çıkar"}
-  </button>
-</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <p>Şifre bulunamadı.</p>
-        )}
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(password.password || "");
+                        }}
+                        className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-0.5 rounded transition text-xs w-full"
+                      >
+                        Kopyala
+                      </button>
+                    </div>
+                    {/* Güncelle ve Sil yan yana */}
+                    <div className="flex flex-row gap-2 w-full">
+                      <button
+                        onClick={() => {
+                          setUpdatePasswordData(password);
+                          setShowUpdateModal(true);
+                          setUpdateStep("request");
+                        }}
+                        className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-0.5 rounded transition text-xs w-full"
+                      >
+                        Güncelle
+                      </button>
+                      <button
+                        onClick={() => handleDeletePassword(password.id)}
+                        className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-0.5 rounded transition text-xs w-full"
+                      >
+                        Sil
+                      </button>
+                    </div>
+                    {/* Öne çıkar/kaldır butonu */}
+                    <button
+                      onClick={async () => {
+                        try {
+                          const token = localStorage.getItem("accessToken");
+                          if (!token) {
+                            navigate("/login");
+                            return;
+                          }
+                          const newIsFeatured = !password.isFeatured;
+                          const response = await axios.put(
+                            `http://localhost:8080/api/user/passwords/${password.id}/toggle-featured`,
+                            { isFeatured: newIsFeatured },
+                            { headers: { Authorization: `Bearer ${token}` } }
+                          );
+                          const updatedPasswordFromServer = {
+                            ...response.data,
+                            isFeatured: response.data.featured,
+                          };
+                          setPasswords((prev) =>
+                            prev.map((p) =>
+                              p.id === updatedPasswordFromServer.id ? updatedPasswordFromServer : p
+                            )
+                          );
+                          setFilteredPasswords((prev) =>
+                            prev.map((p) =>
+                              p.id === updatedPasswordFromServer.id ? updatedPasswordFromServer : p
+                            )
+                          );
+                        } catch (err: any) {
+                          setError(err.response?.data?.message || "Öne çıkarma işlemi başarısız.");
+                        }
+                      }}
+                      className={`px-2 py-0.5 rounded transition text-white text-xs font-semibold w-full ${
+                        password.isFeatured ? "bg-yellow-400 hover:bg-yellow-500" : "bg-gray-400 hover:bg-gray-500"
+                      }`}
+                    >
+                      {password.isFeatured ? "Kaldır" : "Öne Çıkar"}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p>Şifre bulunamadı.</p>
+          )}
+
           {showAddModal && (
             <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
               <div className="bg-white p-6 rounded-lg shadow-lg w-96">
                 <h2 className="text-xl font-bold mb-4">Yeni Şifre Ekle</h2>
+                {errors.length > 0 && (
+                  <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded mb-4">
+                    <ul className="list-disc list-inside">
+                      {errors.map((err, index) => (
+                        <li key={index}>{err}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
                 <select
                   value={newPassword.categoryId}
                   onChange={(e) => setNewPassword({ ...newPassword, categoryId: e.target.value })}
-                  className="w-full p-2 mb-4 border rounded"
+                  className={`w-full p-2 mb-4 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-600 ${
+                    errors.some((err) => err.includes("Kategori")) ? "border-red-500" : "border-gray-300"
+                  }`}
                 >
                   <option value="">Kategori Seçin</option>
                   {categories.map((category) => (
@@ -584,32 +705,43 @@ const verifyCodeAndProceed = async () => {
                   placeholder="Başlık"
                   value={newPassword.title}
                   onChange={(e) => setNewPassword({ ...newPassword, title: e.target.value })}
-                  className="w-full p-2 mb-4 border rounded"
+                  className={`w-full p-2 mb-4 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-600 ${
+                    errors.some((err) => err.includes("Başlık")) ? "border-red-500" : "border-gray-300"
+                  }`}
                 />
                 <input
                   type="text"
                   placeholder="Kullanıcı Adı"
                   value={newPassword.username}
                   onChange={(e) => setNewPassword({ ...newPassword, username: e.target.value })}
-                  className="w-full p-2 mb-4 border rounded"
+                  className={`w-full p-2 mb-4 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-600 ${
+                    errors.some((err) => err.includes("Kullanıcı adı")) ? "border-red-500" : "border-gray-300"
+                  }`}
                 />
                 <input
                   type="password"
                   placeholder="Şifre"
                   value={newPassword.password}
                   onChange={(e) => setNewPassword({ ...newPassword, password: e.target.value })}
-                  className="w-full p-2 mb-4 border rounded"
+                  className={`w-full p-2 mb-4 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-600 ${
+                    errors.some((err) => err.includes("Şifre")) ? "border-red-500" : "border-gray-300"
+                  }`}
                 />
                 <textarea
                   placeholder="Açıklama"
                   value={newPassword.description}
                   onChange={(e) => setNewPassword({ ...newPassword, description: e.target.value })}
-                  className="w-full p-2 mb-4 border rounded"
+                  className={`w-full p-2 mb-4 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-600 ${
+                    errors.some((err) => err.includes("Açıklama")) ? "border-red-500" : "border-gray-300"
+                  }`}
                 />
                 <div className="flex justify-end space-x-4">
                   <button
-                    onClick={() => setShowAddModal(false)}
-                    className="bg-gray-300 px-4 py-2 rounded"
+                    onClick={() => {
+                      setShowAddModal(false);
+                      setErrors([]);
+                    }}
+                    className="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400"
                   >
                     İptal
                   </button>
@@ -668,14 +800,15 @@ const verifyCodeAndProceed = async () => {
                   }
                   className="w-full p-2 mb-4 border rounded"
                 />
+                {/* Şifre değiştirme adımları */}
                 {updateStep === "request" && (
-  <button
-    onClick={() => sendVerificationCode(updatePasswordData.id, "update")}
-    className="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700"
-  >
-    Şifre Değiştirme İsteği Gönder
-  </button>
-)}
+                  <button
+                    onClick={() => sendVerificationCode(updatePasswordData.id, "update")}
+                    className="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700 w-full mb-4"
+                  >
+                    Şifre Değiştirmek İçin Kod Gönder
+                  </button>
+                )}
                 {updateStep === "verify" && (
                   <>
                     <input
@@ -687,7 +820,7 @@ const verifyCodeAndProceed = async () => {
                     />
                     <button
                       onClick={verifyCodeAndProceed}
-                      className="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700"
+                      className="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700 w-full mb-4"
                     >
                       Doğrula
                     </button>
@@ -702,14 +835,9 @@ const verifyCodeAndProceed = async () => {
                       onChange={(e) => setNewPasswordInput(e.target.value)}
                       className="w-full p-2 mb-4 border rounded"
                     />
-                    <button
-                      onClick={handleUpdatePassword}
-                      className="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700"
-                    >
-                      Şifreyi Kaydet
-                    </button>
                   </>
                 )}
+                {/* Genel Kaydet Butonu */}
                 <div className="flex justify-end space-x-4 mt-4">
                   <button
                     onClick={() => {
@@ -721,6 +849,12 @@ const verifyCodeAndProceed = async () => {
                     className="bg-gray-300 px-4 py-2 rounded"
                   >
                     İptal
+                  </button>
+                  <button
+                    onClick={handleUpdatePassword}
+                    className="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700"
+                  >
+                    Kaydet
                   </button>
                 </div>
               </div>
@@ -748,7 +882,7 @@ const verifyCodeAndProceed = async () => {
                   <button
                     onClick={verifyCodeAndProceed}
                     className="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700"
-                    >
+                  >
                     Doğrula
                   </button>
                 </div>

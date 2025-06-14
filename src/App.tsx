@@ -1,5 +1,7 @@
 import React, { useState, useCallback, useEffect } from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
+import axios from "axios";
+import Account from "./components/Account";
 import Login from "./components/Login";
 import Register from "./components/Register";
 import ForgotPassword from "./components/ForgotPassword";
@@ -7,10 +9,8 @@ import ResetPassword from "./components/ResetPassword";
 import Dashboard from "./components/Dashboard";
 import CategoryManagement from "./components/CategoryManagement";
 import UserManagement from "./components/UserManagement";
-import Account from "./components/Account";
-import Navbar from "./components/Navbar";
-import axios from "axios";
 import Passwords from "./components/Passwords";
+import Navbar from "./components/Navbar";
 
 interface UserInfo {
   id?: number;
@@ -22,94 +22,82 @@ interface UserInfo {
   profilePicture: string | null;
 }
 
-const App: React.FC = () => {
-  const [user, setUser] = useState<UserInfo | null>(null);
-  const [loading, setLoading] = useState(true); // Yükleme durumu eklendi
+const AppContent: React.FC = () => {
+  const location = useLocation();
+  const [user, setUser] = useState<UserInfo>({
+    username: localStorage.getItem("username") || "",
+    profilePicture: null,
+  });
 
-  const updateProfilePicture = useCallback(
-    (base64String: string) => {
-      if (user) {
-        setUser((prev) => (prev ? { ...prev, profilePicture: base64String } : null));
+  const updateUser = useCallback((userData: Partial<UserInfo>) => {
+    setUser((prev) => {
+      const newUser = { ...prev, ...userData };
+      if (userData.profilePicture !== undefined) {
+        newUser.profilePicture = userData.profilePicture;
       }
-    },
-    [user]
-  );
+      console.log("Updated user state:", newUser); // State güncellendiğinde log ekle
+      return newUser;
+    });
+  }, []);
 
-  const updateUser = useCallback(
-    (userData: Partial<UserInfo>) => {
-      setUser((prev) => {
-        if (!prev && userData.username) {
-          return { username: userData.username, profilePicture: null, ...userData };
-        }
-        return prev ? { ...prev, ...userData } : null;
-      });
-    },
-    []
-  );
+  const updateProfilePicture = useCallback((base64String: string) => {
+    setUser((prev) => {
+      const newUser = { ...prev, profilePicture: base64String };
+      console.log("Updated profile picture:", newUser); // Profil resmi güncellendiğinde log ekle
+      return newUser;
+    });
+  }, []);
+
+  // Profil resmi değiştiğinde log ekleyerek kontrol et
+  useEffect(() => {
+    console.log("Profile picture changed in App:", user.profilePicture);
+  }, [user.profilePicture]);
 
   useEffect(() => {
     const fetchUserData = async () => {
-      setLoading(true); // Yükleme başlat
-      try {
-        const token = localStorage.getItem("accessToken");
-        if (!token) {
-          setUser(null); // Token yoksa oturumu sonlandır
-          return;
-        }
-
-        const response = await axios.get("http://localhost:8080/api/user/me", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        console.log("API'dan gelen kullanıcı verisi:", response.data); // API yanıtını kontrol et
-        if (response.data && response.data.username) {
-          setUser({
+      const token = localStorage.getItem("accessToken");
+      if (token && !user.id) {
+        try {
+          const response = await axios.get("http://localhost:8080/api/user/me", {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          updateUser({
+            id: response.data.id,
             username: response.data.username,
-            email: response.data.email || "",
-            phone: response.data.phone || "",
-            role: response.data.role || "",
-            status: response.data.status || "",
+            email: response.data.email,
+            phone: response.data.phone,
+            role: response.data.role,
+            status: response.data.status,
             profilePicture: response.data.profilePicture || null,
           });
-        } else {
-          setUser(null);
-          localStorage.removeItem("accessToken"); // Geçersiz veri gelirse token'ı temizle
+        } catch (error) {
+          console.error("Kullanıcı bilgisi çekilirken hata:", error);
+          localStorage.removeItem("accessToken");
+          localStorage.removeItem("refreshToken");
+          localStorage.removeItem("username");
+          window.location.href = "/login";
         }
-      } catch (err: any) {
-        console.error("Kullanıcı verisi yükleme hatası:", err.response ? err.response.data : err.message);
-        setUser(null); // Hata durumunda oturumu sonlandır
-        localStorage.removeItem("accessToken"); // Hatalı token'ı temizle
-      } finally {
-        setLoading(false); // Yükleme tamamlandı
       }
     };
     fetchUserData();
-  }, []);
+  }, [updateUser, user.id]);
 
-  if (loading) {
-    return <div className="flex items-center justify-center h-screen">Yükleniyor...</div>; // Yükleme ekranı
-  }
-
-  if (!user) {
-    return (
-      <Router>
-        <Routes>
-          <Route path="/login" element={<Login updateUser={updateUser} />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
-          <Route path="*" element={<Navigate to="/login" />} />
-        </Routes>
-      </Router>
-    );
-  }
+  // Auth sayfalarını kontrol et
+  const isAuthPage =
+    location.pathname === "/login" ||
+    location.pathname === "/register" ||
+    location.pathname === "/forgot-password" ||
+    location.pathname === "/reset-password";
 
   return (
-    <Router>
-      {user.username &&
-        !["/login", "/register", "/forgot-password", "/reset-password"].includes(window.location.pathname) && (
-          <Navbar username={user.username} profilePicture={user.profilePicture} />
-        )}
-      <div className={user.username ? "mt-16" : ""}>
+    <>
+      {user.username && !isAuthPage && localStorage.getItem("accessToken") && (
+        <Navbar
+          username={user.username}
+          profilePicture={user.profilePicture}
+        />
+      )}
+      <div className={user.username && !isAuthPage && localStorage.getItem("accessToken") ? "mt-16" : ""}>
         <Routes>
           <Route path="/login" element={<Login updateUser={updateUser} />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -120,19 +108,25 @@ const App: React.FC = () => {
           <Route path="/user/passwords" element={<Passwords user={user} />} />
           <Route
             path="/admin/account"
-            element={<Account user={user} updateProfilePicture={updateProfilePicture} />}
+            element={<Account user={user} updateProfilePicture={updateProfilePicture} updateUser={updateUser} />}
           />
           <Route
             path="/user/account"
-            element={<Account user={user} updateProfilePicture={updateProfilePicture} />}
+            element={<Account user={user} updateProfilePicture={updateProfilePicture} updateUser={updateUser} />}
           />
           <Route path="/user/dashboard" element={<Dashboard user={user} />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/" element={<Login updateUser={updateUser} />} />
         </Routes>
       </div>
-    </Router>
+    </>
   );
 };
+
+const App: React.FC = () => (
+  <Router>
+    <AppContent />
+  </Router>
+);
 
 export default App;

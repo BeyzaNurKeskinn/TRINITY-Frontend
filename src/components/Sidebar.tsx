@@ -54,7 +54,7 @@ const Sidebar: React.FC = () => {
   if (loading) {
     return (
       <div className="bg-gradient-to-b from-gray-900 to-gray-800 text-white w-64 min-h-screen p-4 fixed top-16 z-20 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-indigo-400"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-red-600"></div>
       </div>
     );
   }
@@ -62,7 +62,7 @@ const Sidebar: React.FC = () => {
   return (
     <div className={`bg-gradient-to-b from-gray-900 to-gray-800 text-white min-h-screen p-4 fixed top-16 z-20 transition-all duration-300 ${isCollapsed ? "w-16" : "w-64"}`}>
       <div className="flex items-center justify-between mb-6">
-        {!isCollapsed && <h2 className="text-2xl font-extrabold text-indigo-300">Menü</h2>}
+        {!isCollapsed && <h2 className="text-2xl font-extrabold text-red-600">Menü</h2>}
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
           className="p-2 rounded-full hover:bg-gray-700 transition-colors duration-200"
@@ -78,7 +78,7 @@ const Sidebar: React.FC = () => {
             <button
               onClick={() => navigate(item.path)}
               className={`flex items-center w-full text-left p-3 rounded-lg transition-all duration-200 ${
-                location.pathname === item.path ? "bg-indigo-600 text-white shadow-md" : "hover:bg-indigo-700 hover:shadow-md"
+                location.pathname === item.path ? "bg-red-600 text-white shadow-md" : "hover:bg-red-700 hover:shadow-md"
               }`}
             >
               <svg className="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -91,7 +91,7 @@ const Sidebar: React.FC = () => {
         <li>
           <button
             onClick={handleLogout}
-            className="flex items-center w-full text-left p-3 rounded-lg hover:bg-indigo-700 transition-all duration-200"
+            className="flex items-center w-full text-left p-3 rounded-lg hover:bg-red-700 transition-all duration-200"
           >
             <svg className="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h3a3 3 0 013 3v1" />
