@@ -105,7 +105,7 @@ const Passwords: React.FC<PasswordsProps> = ({ user }) => {
         const response = await axios.get(url, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        console.log("Sunucudan gelen şifreler:", response.data);
+       
         // Mapping: featured -> isFeatured
         const mappedPasswords = response.data.map((p: any) => ({
           ...p,
@@ -376,9 +376,7 @@ const Passwords: React.FC<PasswordsProps> = ({ user }) => {
     }
   };
 
-  useEffect(() => {
-    console.log("Passwords state güncellendi:", passwords);
-  }, [passwords]);
+
 
   const verifyCodeAndProceed = async () => {
     try {
@@ -487,22 +485,28 @@ const Passwords: React.FC<PasswordsProps> = ({ user }) => {
     );
   }
 
-  return (
+    return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-gray-50 to-blue-100">
       <Navbar username={user.username} profilePicture={user.profilePicture} />
       <div className="flex flex-1">
-        <Sidebar />
-        <div className="ml-64 p-6 w-full mt-8">
-          <h1 className="text-3xl font-bold mb-6 text-gray-900 animate-fade-in">Şifrelerim</h1>
+        {/* Sidebar - Hide on mobile/tablet, show on desktop */}
+        <div>
+          <Sidebar />
+        </div>
+        <div className="w-full ml-14 lg:ml-64 p-2 sm:p-4 sm:ml-20 md:p-6 mt-4 sm:mt-6 md:mt-8">
+          <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 text-gray-900 animate-fade-in">
+            Şifrelerim
+          </h1>
 
-          <div className="flex flex-wrap gap-4 mb-7">
+          {/* Kategori Listesi */}
+          <div className="flex flex-wrap gap-3 sm:gap-2 mb-5 sm:mb-7">
             <div
               onClick={() => setSelectedCategory({ id: -1, name: "Tümü", description: "Tüm şifreler", status: "ACTIVE" })}
-              className={`bg-gray-200 p-4 rounded-lg cursor-pointer shadow hover:shadow-lg transition transform hover:scale-105 ${
+              className={`bg-gray-200 p-2 sm:p-4 rounded-lg cursor-pointer shadow hover:shadow-lg transition transform hover:scale-105 ${
                 selectedCategory && selectedCategory.name === "Tümü" ? "ring-2 ring-indigo-600" : ""
               }`}
             >
-              <h3 className="text-lg font-semibold">Tümü</h3>
+              <h3 className="text-base sm:text-lg font-semibold">Tümü</h3>
             </div>
             {userCategories.map((category, index) => (
               <div
@@ -510,52 +514,65 @@ const Passwords: React.FC<PasswordsProps> = ({ user }) => {
                 onClick={() => setSelectedCategory(category)}
                 className={`${
                   categoryColors[index % categoryColors.length]
-                } p-4 rounded-lg cursor-pointer shadow hover:shadow-lg transition transform hover:scale-105 ${
+                } p-2 sm:p-4 rounded-lg cursor-pointer shadow hover:shadow-lg transition transform hover:scale-105 ${
                   selectedCategory && selectedCategory.id === category.id ? "ring-2 ring-indigo-600" : ""
                 }`}
               >
-                <h3 className="text-lg font-semibold">{category.name}</h3>
+                <h3 className="text-base sm:text-lg font-semibold">{category.name}</h3>
               </div>
             ))}
           </div>
 
-          <div className="flex items-center mb-6 justify-end w-full space-x-2">
+          {/* Arama ve Yeni Şifre */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center mb-4 sm:mb-6 gap-2 sm:gap-2 justify-end w-full">
             <input
               type="text"
               placeholder="Şifre ara (başlık, kullanıcı adı, açıklama)"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               onKeyPress={handleKeyPress}
-              className="w-80 p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600"
+              className="w-full sm:w-80 p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600"
             />
-            <button
-              onClick={handleSearch}
-              className="bg-gray-800 text-white px-4 py-2 rounded-lg hover:bg-gray-900"
-            >
-              Ara
-            </button>
-            {searchTerm && (
+            <div className="flex flex-row gap-2">
               <button
-                onClick={clearSearch}
-                className="bg-gray-300 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-400"
+                onClick={handleSearch}
+                className="bg-gray-800 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-gray-900"
               >
-                Temizle
+                Ara
               </button>
-            )}
-            <button
-              onClick={() => setShowAddModal(true)}
-              className={`bg-gray-800 text-white px-4 py-2 rounded-lg hover:bg-gray-900 ${addPulse ? "animate-pulse" : ""}`}
-            >
-              Yeni Şifre Ekle
-            </button>
+              {searchTerm && (
+                <button
+                  onClick={clearSearch}
+                  className="bg-gray-300 text-gray-800 px-3 sm:px-4 py-2 rounded-lg hover:bg-gray-400"
+                >
+                  Temizle
+                </button>
+              )}
+              <button
+                onClick={() => setShowAddModal(true)}
+                className={`bg-gray-800 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-gray-900 ${addPulse ? "animate-pulse" : ""}`}
+              >
+                Yeni Şifre Ekle
+              </button>
+            </div>
           </div>
 
+          {/* Şifre Kartları */}
           {filteredPasswords.length > 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div
+              className="
+                grid
+                grid-cols-1
+                sm:grid-cols-1
+                md:grid-cols-2
+                lg:grid-cols-4
+                gap-3 sm:gap-4
+              "
+            >
               {filteredPasswords.map((password) => (
                 <div
                   key={password.id}
-                  className={`relative bg-blue-50 dark:bg-slate-900 rounded-xl shadow p-4 flex flex-row justify-between gap-4 border border-gray-200 transition-transform duration-300 hover:scale-105 hover:shadow-lg text-sm min-h-[120px] ${
+                  className={`relative bg-blue-50 dark:bg-slate-900 rounded-xl shadow p-3 sm:p-4 flex flex-row justify-between gap-3 sm:gap-4 border border-gray-200 transition-transform duration-300 hover:scale-105 hover:shadow-lg text-sm min-h-[120px] ${
                     password.isFeatured ? "border-yellow-300 ring-1 ring-yellow-200" : "border-gray-200"
                   } ${highlightedPasswordId === password.id ? "ring-4 ring-blue-400 bg-blue-100 animate-pulse" : ""}`}
                 >
@@ -574,9 +591,9 @@ const Passwords: React.FC<PasswordsProps> = ({ user }) => {
                     )}
                   </div>
                   {/* Sağ: Butonlar */}
-                  <div className="flex flex-col items-end gap-2 min-w-[120px]">
+                  <div className="flex flex-col items-end gap-1 sm:gap-2 min-w-[90px] sm:min-w-[120px]">
                     {/* Gör/Gizle ve Kopyala yan yana */}
-                    <div className="flex flex-row gap-2 w-full">
+                    <div className="flex flex-row gap-1 sm:gap-2 w-full">
                       {visiblePasswords[password.id] ? (
                         <button
                           onClick={() => {
@@ -586,14 +603,14 @@ const Passwords: React.FC<PasswordsProps> = ({ user }) => {
                               return newVisible;
                             });
                           }}
-                          className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-0.5 rounded transition text-xs w-full"
+                          className="bg-blue-500 hover:bg-blue-600 text-white px-1 sm:px-2 py-0.5 rounded transition text-xs w-full"
                         >
                           Gizle
                         </button>
                       ) : (
                         <button
                           onClick={() => sendVerificationCode(password.id, "view")}
-                          className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-0.5 rounded transition text-xs w-full"
+                          className="bg-blue-500 hover:bg-blue-600 text-white px-1 sm:px-2 py-0.5 rounded transition text-xs w-full"
                         >
                           Gör
                         </button>
@@ -602,26 +619,26 @@ const Passwords: React.FC<PasswordsProps> = ({ user }) => {
                         onClick={() => {
                           navigator.clipboard.writeText(password.password || "");
                         }}
-                        className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-0.5 rounded transition text-xs w-full"
+                        className="bg-blue-500 hover:bg-blue-600 text-white px-1 sm:px-2 py-0.5 rounded transition text-xs w-full"
                       >
                         Kopyala
                       </button>
                     </div>
                     {/* Güncelle ve Sil yan yana */}
-                    <div className="flex flex-row gap-2 w-full">
+                    <div className="flex flex-row gap-1 sm:gap-2 w-full">
                       <button
                         onClick={() => {
                           setUpdatePasswordData(password);
                           setShowUpdateModal(true);
                           setUpdateStep("request");
                         }}
-                        className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-0.5 rounded transition text-xs w-full"
+                        className="bg-blue-500 hover:bg-blue-600 text-white px-1 sm:px-2 py-0.5 rounded transition text-xs w-full"
                       >
                         Güncelle
                       </button>
                       <button
                         onClick={() => handleDeletePassword(password.id)}
-                        className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-0.5 rounded transition text-xs w-full"
+                        className="bg-blue-500 hover:bg-blue-600 text-white px-1 sm:px-2 py-0.5 rounded transition text-xs w-full"
                       >
                         Sil
                       </button>
@@ -659,7 +676,7 @@ const Passwords: React.FC<PasswordsProps> = ({ user }) => {
                           setError(err.response?.data?.message || "Öne çıkarma işlemi başarısız.");
                         }
                       }}
-                      className={`px-2 py-0.5 rounded transition text-white text-xs font-semibold w-full ${
+                      className={`px-1 sm:px-2 py-0.5 rounded transition text-white text-xs font-semibold w-full ${
                         password.isFeatured ? "bg-yellow-400 hover:bg-yellow-500" : "bg-gray-400 hover:bg-gray-500"
                       }`}
                     >
@@ -675,7 +692,7 @@ const Passwords: React.FC<PasswordsProps> = ({ user }) => {
 
           {showAddModal && (
             <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
-              <div className="bg-white p-6 rounded-lg shadow-lg w-96">
+              <div className="bg-white p-4 sm:p-6 rounded-lg shadow-lg w-full max-w-xs sm:max-w-md">
                 <h2 className="text-xl font-bold mb-4">Yeni Şifre Ekle</h2>
                 {errors.length > 0 && (
                   <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded mb-4">
@@ -758,7 +775,7 @@ const Passwords: React.FC<PasswordsProps> = ({ user }) => {
 
           {showUpdateModal && updatePasswordData && (
             <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
-              <div className="bg-white p-6 rounded-lg shadow-lg w-96">
+              <div className="bg-white p-4 sm:p-6 rounded-lg shadow-lg w-full max-w-xs sm:max-w-md">
                 <h2 className="text-xl font-bold mb-4">Şifreyi Güncelle</h2>
                 <select
                   value={updatePasswordData.categoryId}
@@ -862,8 +879,8 @@ const Passwords: React.FC<PasswordsProps> = ({ user }) => {
           )}
 
           {showVerifyModal && (
-            <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
-              <div className="bg-white p-6 rounded-lg shadow-lg w-96">
+           <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white p-4 sm:p-6 rounded-lg shadow-lg w-full max-w-xs sm:max-w-md">
                 <h2 className="text-xl font-bold mb-4">Doğrulama Kodu Girin</h2>
                 <p>E-postanıza gönderilen 6 haneli kodu girin:</p>
                 <input

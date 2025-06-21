@@ -266,16 +266,17 @@ const UserManagement: React.FC<UserManagementProps> = ({ user }) => {
       </div>
     );
   }
-
-  return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-gray-50 to-blue-100">
+return (
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-gray-50 to-blue-100 w-screen min-w-full overflow-x-hidden box-border text-gray-800 font-sans">
       <Navbar username={user.username} profilePicture={user.profilePicture} />
-      <div className="flex flex-1">
+      <div className="flex flex-1 pt-2">
         <Sidebar />
-        <div className="ml-64 p-6 w-full mt-8">
-          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-4">
-            <h1 className="text-3xl font-bold mb-6 text-gray-900 animate-fade-in">Kullanıcı Yönetimi</h1>
-            <div className="flex items-center gap-2 w-full sm:w-auto">
+        <main className="ml-14 sm:ml-12 md:ml-64 p-2 sm:p-4 md:p-6 w-full max-w-full box-border mt-3 sm:mt-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-3 sm:mb-6">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 animate-fade-in">
+              Kullanıcı Yönetimi
+            </h1>
+            <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
               <div className="relative w-full sm:w-64">
                 <MagnifyingGlassIcon className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                 <input
@@ -283,12 +284,12 @@ const UserManagement: React.FC<UserManagementProps> = ({ user }) => {
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Kullanıcı ara..."
-                  className="pl-10 pr-4 py-2 w-full rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-200 outline-none bg-white text-gray-700 shadow-sm transition-colors"
+                  className="pl-10 pr-3 py-2 w-full rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-200 outline-none bg-white text-gray-700 text-sm sm:text-base shadow-sm"
                 />
               </div>
               <button
                 onClick={() => setShowAddModal(true)}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 transition-colors whitespace-nowrap"
+                className="bg-blue-600 text-white px-3 py-2 rounded-lg shadow hover:bg-blue-700 transition-colors text-sm sm:text-base min-h-[40px] w-full sm:w-auto"
               >
                 Yeni Kullanıcı Ekle
               </button>
@@ -296,13 +297,13 @@ const UserManagement: React.FC<UserManagementProps> = ({ user }) => {
           </div>
 
           {successMessage && (
-            <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-2 rounded mb-4 animate-fade-in">
+            <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-2 rounded mb-3 animate-fade-in text-sm sm:text-base">
               {successMessage}
             </div>
           )}
 
           {errors.length > 0 && !showAddModal && !showUpdateModal && !showDeactivateConfirmModal && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded mb-4 animate-fade-in">
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded mb-3 animate-fade-in text-sm sm:text-base">
               <ul className="list-disc list-inside">
                 {errors.map((err, index) => (
                   <li key={index}>{err}</li>
@@ -311,12 +312,13 @@ const UserManagement: React.FC<UserManagementProps> = ({ user }) => {
             </div>
           )}
 
+          {/* Modal kodlarında da padding ve maxWidth'ler küçültüldü */}
           {showAddModal && (
-            <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
-              <div className="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md">
-                <h2 className="text-2xl font-bold mb-6 text-indigo-700">Yeni Kullanıcı</h2>
+            <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50 p-2">
+              <div className="bg-white p-4 sm:p-6 rounded-xl shadow-2xl w-full max-w-md">
+                <h2 className="text-lg sm:text-xl font-bold mb-4 text-indigo-700">Yeni Kullanıcı</h2>
                 {errors.length > 0 && (
-                  <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded mb-4 animate-fade-in">
+                  <div className="bg-red-100 border border-red-400 text-red-700 px-3 py-2 rounded mb-3 animate-fade-in text-sm">
                     <ul className="list-disc list-inside">
                       {errors.map((err, index) => (
                         <li key={index}>{err}</li>
@@ -329,7 +331,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ user }) => {
                   placeholder="Kullanıcı Adı"
                   value={newUser.username}
                   onChange={(e) => setNewUser({ ...newUser, username: e.target.value })}
-                  className={`w-full p-3 mb-4 border rounded-lg focus:ring-2 focus:ring-indigo-200 outline-none ${
+                  className={`w-full p-2 mb-3 border rounded-lg focus:ring-2 focus:ring-indigo-200 outline-none text-sm ${
                     errors.some((err) => err.includes("Kullanıcı adı")) ? "border-red-500" : "border-gray-200"
                   }`}
                   required
@@ -339,7 +341,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ user }) => {
                   placeholder="E-posta"
                   value={newUser.email}
                   onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
-                  className={`w-full p-3 mb-4 border rounded-lg focus:ring-2 focus:ring-indigo-200 outline-none ${
+                  className={`w-full p-2 mb-3 border rounded-lg focus:ring-2 focus:ring-indigo-200 outline-none text-sm ${
                     errors.some((err) => err.includes("E-posta")) ? "border-red-500" : "border-gray-200"
                   }`}
                   required
@@ -349,7 +351,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ user }) => {
                   placeholder="Telefon"
                   value={newUser.phone}
                   onChange={(e) => setNewUser({ ...newUser, phone: e.target.value })}
-                  className={`w-full p-3 mb-4 border rounded-lg focus:ring-2 focus:ring-indigo-200 outline-none ${
+                  className={`w-full p-2 mb-3 border rounded-lg focus:ring-2 focus:ring-indigo-200 outline-none text-sm ${
                     errors.some((err) => err.includes("Telefon")) ? "border-red-500" : "border-gray-200"
                   }`}
                   required
@@ -359,7 +361,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ user }) => {
                   placeholder="Şifre"
                   value={newUser.password || ""}
                   onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
-                  className={`w-full p-3 mb-4 border rounded-lg focus:ring-2 focus:ring-indigo-200 outline-none ${
+                  className={`w-full p-2 mb-3 border rounded-lg focus:ring-2 focus:ring-indigo-200 outline-none text-sm ${
                     errors.some((err) => err.includes("Şifre")) ? "border-red-500" : "border-gray-200"
                   }`}
                   required
@@ -367,24 +369,24 @@ const UserManagement: React.FC<UserManagementProps> = ({ user }) => {
                 <select
                   value={newUser.role}
                   onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
-                  className="w-full p-3 mb-6 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-200 outline-none transition-colors"
+                  className="w-full p-2 mb-4 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-200 outline-none text-sm"
                 >
                   <option value="USER">Kullanıcı</option>
                   <option value="ADMIN">Yönetici</option>
                 </select>
-                <div className="flex justify-end gap-4">
+                <div className="flex justify-end gap-3">
                   <button
                     onClick={() => {
                       setShowAddModal(false);
                       setErrors([]);
                     }}
-                    className="bg-gray-100 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors"
+                    className="bg-gray-100 px-4 py-2 rounded-lg hover:bg-gray-200 text-sm"
                   >
                     İptal
                   </button>
                   <button
                     onClick={handleAddUser}
-                    className="bg-indigo-600 text-white-blue px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
+                    className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 text-sm"
                   >
                     Kaydet
                   </button>
@@ -394,11 +396,11 @@ const UserManagement: React.FC<UserManagementProps> = ({ user }) => {
           )}
 
           {showUpdateModal && selectedUser && (
-            <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
-              <div className="bg-white p-8 rounded-lg shadow-2xl w-full max-w-md">
-                <h2 className="text-2xl font-bold mb-6 text-indigo-700">Kullanıcıyı Güncelle</h2>
+            <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50 p-2">
+              <div className="bg-white p-4 sm:p-6 rounded-xl shadow-2xl w-full max-w-md">
+                <h2 className="text-lg sm:text-xl font-bold mb-4 text-indigo-700">Kullanıcıyı Güncelle</h2>
                 {errors.length > 0 && (
-                  <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded mb-4 animate-fade-in">
+                  <div className="bg-red-100 border border-red-400 text-red-700 px-3 py-2 rounded mb-3 animate-fade-in text-sm">
                     <ul className="list-disc list-inside">
                       {errors.map((err, index) => (
                         <li key={index}>{err}</li>
@@ -411,7 +413,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ user }) => {
                   placeholder="Kullanıcı Adı"
                   value={selectedUser.username}
                   onChange={(e) => setSelectedUser({ ...selectedUser, username: e.target.value })}
-                  className={`w-full p-3 mb-4 border rounded-lg focus:ring-2 focus:ring-indigo-200 outline-none ${
+                  className={`w-full p-2 mb-3 border rounded-lg focus:ring-2 focus:ring-indigo-200 outline-none text-sm ${
                     errors.some((err) => err.includes("Kullanıcı adı")) ? "border-red-500" : "border-gray-200"
                   }`}
                   required
@@ -421,7 +423,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ user }) => {
                   placeholder="E-posta"
                   value={selectedUser.email}
                   onChange={(e) => setSelectedUser({ ...selectedUser, email: e.target.value })}
-                  className={`w-full p-3 mb-4 border rounded-lg focus:ring-2 focus:ring-indigo-200 outline-none ${
+                  className={`w-full p-2 mb-3 border rounded-lg focus:ring-2 focus:ring-indigo-200 outline-none text-sm ${
                     errors.some((err) => err.includes("E-posta")) ? "border-red-500" : "border-gray-200"
                   }`}
                   required
@@ -431,7 +433,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ user }) => {
                   placeholder="Telefon"
                   value={selectedUser.phone}
                   onChange={(e) => setSelectedUser({ ...selectedUser, phone: e.target.value })}
-                  className={`w-full p-3 mb-4 border rounded-lg focus:ring-2 focus:ring-indigo-200 outline-none ${
+                  className={`w-full p-2 mb-3 border rounded-lg focus:ring-2 focus:ring-indigo-200 outline-none text-sm ${
                     errors.some((err) => err.includes("Telefon")) ? "border-red-500" : "border-gray-200"
                   }`}
                   required
@@ -441,14 +443,14 @@ const UserManagement: React.FC<UserManagementProps> = ({ user }) => {
                   placeholder="Yeni Şifre (boş bırakılabilir)"
                   value={updatePassword}
                   onChange={(e) => setUpdatePassword(e.target.value)}
-                  className={`w-full p-3 mb-4 border rounded-lg focus:ring-2 focus:ring-blue-200 outline-none ${
+                  className={`w-full p-2 mb-3 border rounded-lg focus:ring-2 focus:ring-blue-200 outline-none text-sm ${
                     errors.some((err) => err.includes("Şifre")) ? "border-red-500" : "border-gray-200"
                   }`}
                 />
                 <select
                   value={selectedUser.status}
                   onChange={(e) => setSelectedUser({ ...selectedUser, status: e.target.value })}
-                  className="w-full p-3 mb-4 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-200 outline-none transition-colors"
+                  className="w-full p-2 mb-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-200 outline-none text-sm"
                 >
                   <option value="ACTIVE">Aktif</option>
                   <option value="INACTIVE">Pasif</option>
@@ -456,25 +458,25 @@ const UserManagement: React.FC<UserManagementProps> = ({ user }) => {
                 <select
                   value={selectedUser.role}
                   onChange={(e) => setSelectedUser({ ...selectedUser, role: e.target.value })}
-                  className="w-full p-3 mb-6 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-200 outline-none transition-colors"
+                  className="w-full p-2 mb-4 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-200 outline-none text-sm"
                 >
                   <option value="USER">Kullanıcı</option>
                   <option value="ADMIN">Yönetici</option>
                 </select>
-                <div className="flex justify-end gap-4">
+                <div className="flex justify-end gap-3">
                   <button
                     onClick={() => {
                       setShowUpdateModal(false);
                       setUpdatePassword("");
                       setErrors([]);
                     }}
-                    className="bg-gray-100 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors"
+                    className="bg-gray-100 px-4 py-2 rounded-lg hover:bg-gray-200 text-sm"
                   >
                     İptal
                   </button>
                   <button
                     onClick={handleUpdateUser}
-                    className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
+                    className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 text-sm"
                   >
                     Güncelle
                   </button>
@@ -484,25 +486,25 @@ const UserManagement: React.FC<UserManagementProps> = ({ user }) => {
           )}
 
           {showDeactivateConfirmModal && (
-            <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
-              <div className="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md">
-                <h2 className="text-2xl font-bold mb-6 text-indigo-700">Kullanıcıyı Pasif Et</h2>
-                <p className="mb-6 text-gray-700">
+            <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50 p-2">
+              <div className="bg-white p-4 sm:p-6 rounded-xl shadow-2xl w-full max-w-md">
+                <h2 className="text-lg sm:text-xl font-bold mb-4 text-indigo-700">Kullanıcıyı Pasif Et</h2>
+                <p className="mb-4 text-gray-700 text-sm">
                   <strong>{users.find((u) => u.id === userToDeactivate)?.username}</strong> kullanıcısını pasif etmek istediğinizden emin misiniz? Kullanıcı artık sisteme giriş yapamayacak.
                 </p>
-                <div className="flex justify-end gap-4">
+                <div className="flex justify-end gap-3">
                   <button
                     onClick={() => {
                       setShowDeactivateConfirmModal(false);
                       setUserToDeactivate(null);
                     }}
-                    className="bg-gray-100 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors"
+                    className="bg-gray-100 px-4 py-2 rounded-lg hover:bg-gray-200 text-sm"
                   >
                     İptal
                   </button>
                   <button
                     onClick={handleDeactivateUser}
-                    className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
+                    className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 text-sm"
                   >
                     Pasif Et
                   </button>
@@ -511,7 +513,8 @@ const UserManagement: React.FC<UserManagementProps> = ({ user }) => {
             </div>
           )}
 
-          <div className="grid grid-cols-1 gap-6">
+          {/* Responsive grid: mobilde 1, md'de 2, lg'de 3 sütun */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {users
               .filter(
                 (u) =>
@@ -522,38 +525,32 @@ const UserManagement: React.FC<UserManagementProps> = ({ user }) => {
               .map((u) => (
                 <div
                   key={u.id}
-                  className="relative bg-white rounded-2xl shadow-md border border-gray-200 flex flex-col sm:flex-row items-center justify-between px-6 py-5 gap-4 hover:shadow-lg transition-all duration-200 animate-fade-in"
+                  className="bg-white rounded-xl shadow-md border border-gray-200 flex flex-col px-4 py-3 gap-2 w-full hover:shadow-lg transition-all duration-200 animate-fade-in"
                 >
-                  <div className="flex items-center gap-4 w-full sm:w-auto">
-                    <div className="flex-shrink-0 flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full">
-                      <UserIcon className="w-8 h-8 text-blue-600" />
+                  <div className="flex items-center gap-3 w-full">
+                    <div className="flex-shrink-0 flex items-center justify-center w-12 h-12 bg-blue-100 rounded-full">
+                      <UserIcon className="w-6 h-6 text-blue-600" />
                     </div>
-                    <div className="flex-1 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6">
-                      <div className="flex flex-col">
-                        <span className="text-lg font-semibold text-gray-900">{u.username}</span>
-                        <span className="flex items-center text-gray-600 text-sm">
-                          <EnvelopeIcon className="w-4 h-4 mr-1.5" />
-                          {u.email}
-                        </span>
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="flex items-center text-gray-600 text-sm">
-                          <PhoneIcon className="w-4 h-4 mr-1.5" />
-                          {u.phone || "-"}
-                        </span>
-                      </div>
-                      <div>
+                    <div className="flex-1 flex flex-col gap-1">
+                      <span className="text-base font-semibold text-gray-900 truncate">{u.username}</span>
+                      <span className="flex items-center text-gray-600 text-xs truncate">
+                        <EnvelopeIcon className="w-4 h-4 mr-1 flex-shrink-0" />
+                        <span className="truncate">{u.email}</span>
+                      </span>
+                      <span className="flex items-center text-gray-600 text-xs truncate">
+                        <PhoneIcon className="w-4 h-4 mr-1 flex-shrink-0" />
+                        {u.phone || "-"}
+                      </span>
+                      <div className="flex gap-2 mt-1">
                         <span
-                          className={`px-3 py-1 rounded-full text-xs font-medium ${
+                          className={`px-2 py-0.5 rounded-full text-xs font-medium ${
                             u.role === "ADMIN" ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-700"
                           }`}
                         >
                           {u.role === "ADMIN" ? "Yönetici" : "Kullanıcı"}
                         </span>
-                      </div>
-                      <div>
                         <span
-                          className={`px-3 py-1 rounded-full text-xs font-medium ${
+                          className={`px-2 py-0.5 rounded-full text-xs font-medium ${
                             u.status === "ACTIVE" ? "bg-green-100 text-green-700" : "bg-gray-200 text-gray-500"
                           }`}
                         >
@@ -562,14 +559,14 @@ const UserManagement: React.FC<UserManagementProps> = ({ user }) => {
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex justify-end gap-2 mt-2">
                     <button
                       onClick={() => {
                         setSelectedUser(u);
                         setUpdatePassword("");
                         setShowUpdateModal(true);
                       }}
-                      className="bg-blue-600 text-white px-3 py-1 rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                      className="bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 transition-colors text-xs sm:text-sm"
                       title="Düzenle"
                     >
                       Düzenle
@@ -580,7 +577,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ user }) => {
                           setUserToDeactivate(u.id);
                           setShowDeactivateConfirmModal(true);
                         }}
-                        className="bg-red-600 text-white px-3 py-1 rounded-lg hover:bg-red-700 transition-colors text-sm"
+                        className="bg-red-600 text-white px-3 py-1.5 rounded-lg hover:bg-red-700 transition-colors text-xs sm:text-sm"
                         title="Pasif Et"
                       >
                         Pasif Et
@@ -590,10 +587,9 @@ const UserManagement: React.FC<UserManagementProps> = ({ user }) => {
                 </div>
               ))}
           </div>
-        </div>
+        </main>
       </div>
     </div>
   );
 };
-
 export default UserManagement;

@@ -250,26 +250,26 @@ const Account: React.FC<AccountProps> = ({ user, updateProfilePicture, updateUse
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-gray-50 to-blue-100 text-gray-800 font-sans">
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-gray-50 to-blue-100 w-screen min-w-full overflow-x-hidden box-border text-gray-800 font-sans">
       <Navbar username={user.username} profilePicture={user.profilePicture} />
       <div className="flex flex-1 pt-3">
         <Sidebar />
-        <main className="ml-64 p-8 w-full">
-          <div className="max-w-4xl mx-auto">
-            <h1 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-green-500 mb-8 animate-fade-in">
+        <main className="ml-14 sm:ml-8 md:ml-64 p-3 sm:p-4 md:p-8 w-full box-border">
+          <div className="max-w-full sm:max-w-full md:max-w-4xl mx-auto">
+            <h1 className="text-3xl sm:text-4xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-green-500 mb-6 sm:mb-8 md:mb-8 animate-fade-in">
               Hesabım
             </h1>
 
             {successMessage && (
-              <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-2 rounded mb-4 animate-fade-in">
+              <div className="bg-green-100 border border-green-400 text-green-700 px-3 sm:px-4 py-2 rounded mb-4 animate-fade-in">
                 {successMessage}
               </div>
             )}
 
             {/* Profil Resmi Kartı */}
-            <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-lg mb-8 transform hover:scale-105 transition-transform duration-300 animate-fade-in">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">Profil Resmi</h2>
-              <div className="flex items-center space-x-6">
+            <div className="bg-white p-4 sm:p-5 md:p-6 rounded-2xl border border-gray-200 shadow-lg mb-6 sm:mb-8 md:mb-8 transform hover:scale-105 transition-transform duration-300 animate-fade-in">
+              <h2 className="text-xl sm:text-2xl md:text-2xl font-bold text-gray-900 mb-4">Profil Resmi</h2>
+              <div className="flex flex-col sm:flex-row items-center sm:items-start sm:space-x-6 space-y-4 sm:space-y-0">
                 <div className="relative">
                   <img
                     src={
@@ -278,18 +278,18 @@ const Account: React.FC<AccountProps> = ({ user, updateProfilePicture, updateUse
                         : "https://via.placeholder.com/150?text=Resim+Yok"
                     }
                     alt="Profil resmi"
-                    className="w-28 h-28 rounded-full object-cover border-4 border-gradient-to-r from-red-500 to-green-500 shadow-lg"
+                    className="w-20 sm:w-24 md:w-28 h-20 sm:h-24 md:h-28 rounded-full object-cover border-4 border-gradient-to-r from-red-500 to-green-500 shadow-lg"
                   />
                   {!user.profilePicture && (
                     <div className="absolute inset-0 rounded-full bg-gradient-to-r from-red-500 to-green-500 bg-opacity-50 flex items-center justify-center">
-                      <span className="text-white text-sm font-semibold">Resim Ekle</span>
+                      <span className="text-white text-xs sm:text-sm md:text-sm font-semibold">Resim Ekle</span>
                     </div>
                   )}
                   <label
                     htmlFor="profile-picture-upload"
-                    className="absolute bottom-0 right-0 bg-gradient-to-r from-red-500 to-green-500 text-white p-2.5 rounded-full cursor-pointer hover:from-red-600 hover:to-green-600 transition-all duration-200 shadow-md"
+                    className="absolute bottom-0 right-0 bg-gradient-to-r from-red-500 to-green-500 text-white p-2 sm:p-2.5 md:p-2.5 rounded-full cursor-pointer hover:from-red-600 hover:to-green-600 transition-all duration-200 shadow-md"
                   >
-                    <CameraIcon className="w-5 h-5" />
+                    <CameraIcon className="w-4 sm:w-5 md:w-5 h-4 sm:h-5 md:h-5" />
                   </label>
                   <input
                     id="profile-picture-upload"
@@ -300,46 +300,46 @@ const Account: React.FC<AccountProps> = ({ user, updateProfilePicture, updateUse
                   />
                 </div>
                 <div>
-                  <p className="text-gray-700 font-medium">Profilini kişiselleştir!</p>
-                  <p className="text-sm text-gray-500">Maksimum dosya boyutu: 5MB</p>
+                  <p className="text-gray-700 font-medium text-sm sm:text-base md:text-base">Profilini kişiselleştir!</p>
+                  <p className="text-xs sm:text-sm md:text-sm text-gray-500">Maksimum dosya boyutu: 5MB</p>
                 </div>
               </div>
             </div>
 
             {/* Kullanıcı Bilgileri Kartı */}
-            <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-lg mb-8 transform hover:scale-105 transition-transform duration-300 animate-fade-in">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Kullanıcı Bilgileri</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <div className="flex items-center space-x-4 p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg">
-                  <UserIcon className="w-8 h-8 text-green-500" />
+            <div className="bg-white p-4 sm:p-5 md:p-6 rounded-2xl border border-gray-200 shadow-lg mb-6 sm:mb-8 md:mb-8 transform hover:scale-105 transition-transform duration-300 animate-fade-in">
+              <h2 className="text-xl sm:text-2xl md:text-2xl font-bold text-gray-900 mb-4 sm:mb-6 md:mb-6">Kullanıcı Bilgileri</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-4 sm:gap-6 md:gap-6">
+                <div className="flex items-center space-x-3 sm:space-x-4 md:space-x-4 p-3 sm:p-4 md:p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg">
+                  <UserIcon className="w-6 sm:w-8 md:w-8 h-6 sm:h-8 md:h-8 text-green-500" />
                   <div>
-                    <p className="text-sm font-medium text-gray-500">Kullanıcı Adı</p>
-                    <p className="text-lg font-semibold text-gray-900">{user.username}</p>
+                    <p className="text-xs sm:text-sm md:text-sm font-medium text-gray-500">Kullanıcı Adı</p>
+                    <p className="text-base sm:text-lg md:text-lg font-semibold text-gray-900 truncate">{user.username}</p>
                   </div>
                 </div>
-                <div className="flex items-center space-x-4 p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg">
-                  <EnvelopeIcon className="w-8 h-8 text-red-500" />
+                <div className="flex items-center space-x-3 sm:space-x-4 md:space-x-4 p-3 sm:p-4 md:p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg">
+                  <EnvelopeIcon className="w-6 sm:w-8 md:w-8 h-6 sm:h-8 md:h-8 text-red-500" />
                   <div>
-                    <p className="text-sm font-medium text-gray-500">E-posta</p>
-                    <p className="text-lg font-semibold text-gray-900">{user.email || "-"}</p>
+                    <p className="text-xs sm:text-sm md:text-sm font-medium text-gray-500">E-posta</p>
+                    <p className="text-base sm:text-lg md:text-lg font-semibold text-gray-900 truncate">{user.email || "-"}</p>
                   </div>
                 </div>
-                <div className="flex items-center space-x-4 p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg">
-                  <PhoneIcon className="w-8 h-8 text-green-500" />
+                <div className="flex items-center space-x-3 sm:space-x-4 md:space-x-4 p-3 sm:p-4 md:p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg">
+                  <PhoneIcon className="w-6 sm:w-8 md:w-8 h-6 sm:h-8 md:h-8 text-green-500" />
                   <div>
-                    <p className="text-sm font-medium text-gray-500">Telefon</p>
-                    <p className="text-lg font-semibold text-gray-900">{user.phone || "-"}</p>
+                    <p className="text-xs sm:text-sm md:text-sm font-medium text-gray-500">Telefon</p>
+                    <p className="text-base sm:text-lg md:text-lg font-semibold text-gray-900 truncate">{user.phone || "-"}</p>
                   </div>
                 </div>
-                <div className="flex items-center space-x-4 p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg">
-                  <ShieldCheckIcon className="w-8 h-8 text-green-500" />
+                <div className="flex items-center space-x-3 sm:space-x-4 md:space-x-4 p-3 sm:p-4 md:p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg">
+                  <ShieldCheckIcon className="w-6 sm:w-8 md:w-8 h-6 sm:h-8 md:h-8 text-green-500" />
                   <div>
-                    <p className="text-sm font-medium text-gray-500">Durum</p>
-                    <p className="text-lg font-semibold text-gray-900">{user.status || "-"}</p>
+                    <p className="text-xs sm:text-sm md:text-sm font-medium text-gray-500">Durum</p>
+                    <p className="text-base sm:text-lg md:text-lg font-semibold text-gray-900 truncate">{user.status || "-"}</p>
                   </div>
                 </div>
               </div>
-              <div className="flex justify-end gap-4 mt-6">
+              <div className="flex flex-col sm:flex-row justify-end gap-3 sm:gap-4 md:gap-4 mt-4 sm:mt-6 md:mt-6">
                 <button
                   onClick={() => {
                     setEditUser({
@@ -350,13 +350,13 @@ const Account: React.FC<AccountProps> = ({ user, updateProfilePicture, updateUse
                     });
                     setShowEditModal(true);
                   }}
-                  className="px-6 py-3 bg-gradient-to-r from-red-500 to-green-500 text-white font-semibold rounded-lg shadow-md hover:from-red-600 hover:to-green-600 transition-all duration-300"
+                  className="px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-red-500 to-green-500 text-white font-semibold rounded-lg shadow-md hover:from-red-600 hover:to-green-600 transition-all duration-300"
                 >
                   Bilgileri Düzenle
                 </button>
                 <button
                   onClick={() => setShowFreezeModal(true)}
-                  className="px-6 py-3 bg-gradient-to-r from-red-500 to-green-500 text-white font-semibold rounded-lg shadow-md hover:from-red-600 hover:to-green-600 transition-all duration-300"
+                  className="px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-red-500 to-green-500 text-white font-semibold rounded-lg shadow-md hover:from-red-600 hover:to-green-600 transition-all duration-300"
                 >
                   Hesabı Dondur
                 </button>
@@ -366,22 +366,22 @@ const Account: React.FC<AccountProps> = ({ user, updateProfilePicture, updateUse
             {/* Profil Resmi Yükleme Modalı */}
             {showUploadModal && (
               <div className="fixed inset-0 bg-gray-900 bg-opacity-70 flex items-center justify-center z-50">
-                <div className="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md transform transition-all duration-300 animate-fade-in">
-                  <h2 className="text-2xl font-bold text-gray-900 mb-4">Profil Resmini Yükle</h2>
-                  <p className="text-gray-600 mb-6">Seçtiğiniz resmi yüklemek istediğinize emin misiniz?</p>
-                  <div className="flex justify-end gap-4">
+                <div className="bg-white p-6 sm:p-8 md:p-8 rounded-2xl shadow-2xl w-full max-w-[90vw] sm:max-w-md md:max-w-md transform transition-all duration-300 animate-fade-in">
+                  <h2 className="text-xl sm:text-2xl md:text-2xl font-bold text-gray-900 mb-4">Profil Resmini Yükle</h2>
+                  <p className="text-gray-600 text-sm sm:text-base md:text-base mb-4 sm:mb-6 md:mb-6">Seçtiğiniz resmi yüklemek istediğinize emin misiniz?</p>
+                  <div className="flex justify-end gap-3 sm:gap-4 md:gap-4">
                     <button
                       onClick={() => {
                         setShowUploadModal(false);
                         setSelectedFile(null);
                       }}
-                      className="px-5 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors duration-200"
+                      className="px-4 sm:px-5 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors duration-200"
                     >
                       İptal
                     </button>
                     <button
                       onClick={handleUploadPicture}
-                      className="px-5 py-2 bg-gradient-to-r from-red-500 to-green-500 text-white rounded-lg hover:from-red-600 hover:to-green-600 transition-all duration-300"
+                      className="px-4 sm:px-5 py-2 bg-gradient-to-r from-red-500 to-green-500 text-white rounded-lg hover:from-red-600 hover:to-green-600 transition-all duration-300"
                     >
                       Yükle
                     </button>
@@ -393,11 +393,11 @@ const Account: React.FC<AccountProps> = ({ user, updateProfilePicture, updateUse
             {/* Kullanıcı Bilgisi Düzenleme Modalı */}
             {showEditModal && (
               <div className="fixed inset-0 bg-gray-900 bg-opacity-70 flex items-center justify-center z-50">
-                <div className="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md transform transition-all duration-300 animate-fade-in">
-                  <h2 className="text-2xl font-bold text-gray-900 mb-6">Bilgileri Düzenle</h2>
+                <div className="bg-white p-6 sm:p-8 md:p-8 rounded-2xl shadow-2xl w-full max-w-[90vw] sm:max-w-md md:max-w-md transform transition-all duration-300 animate-fade-in">
+                  <h2 className="text-xl sm:text-2xl md:text-2xl font-bold text-gray-900 mb-4 sm:mb-6 md:mb-6">Bilgileri Düzenle</h2>
                   {errors.length > 0 && (
-                    <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded mb-4 animate-fade-in">
-                      <ul className="list-disc list-inside">
+                    <div className="bg-red-100 border border-red-400 text-red-700 px-3 sm:px-4 py-2 rounded mb-4 animate-fade-in">
+                      <ul className="list-disc list-inside text-xs sm:text-sm md:text-sm">
                         {errors.map((err, index) => (
                           <li key={index}>{err}</li>
                         ))}
@@ -409,7 +409,7 @@ const Account: React.FC<AccountProps> = ({ user, updateProfilePicture, updateUse
                     placeholder="Kullanıcı Adı"
                     value={editUser.username}
                     onChange={(e) => setEditUser({ ...editUser, username: e.target.value })}
-                    className={`w-full p-3 mb-4 border rounded-lg focus:ring-2 focus:ring-indigo-200 outline-none ${
+                    className={`w-full p-2 sm:p-3 md:p-3 mb-4 border rounded-lg focus:ring-2 focus:ring-indigo-200 outline-none text-sm sm:text-base md:text-base ${
                       errors.some((err) => err.includes("Kullanıcı adı")) ? "border-red-500" : "border-gray-200"
                     }`}
                     required
@@ -419,7 +419,7 @@ const Account: React.FC<AccountProps> = ({ user, updateProfilePicture, updateUse
                     placeholder="E-posta"
                     value={editUser.email}
                     onChange={(e) => setEditUser({ ...editUser, email: e.target.value })}
-                    className={`w-full p-3 mb-4 border rounded-lg focus:ring-2 focus:ring-indigo-200 outline-none ${
+                    className={`w-full p-2 sm:p-3 md:p-3 mb-4 border rounded-lg focus:ring-2 focus:ring-indigo-200 outline-none text-sm sm:text-base md:text-base ${
                       errors.some((err) => err.includes("E-posta")) ? "border-red-500" : "border-gray-200"
                     }`}
                     required
@@ -429,7 +429,7 @@ const Account: React.FC<AccountProps> = ({ user, updateProfilePicture, updateUse
                     placeholder="Telefon"
                     value={editUser.phone}
                     onChange={(e) => setEditUser({ ...editUser, phone: e.target.value })}
-                    className={`w-full p-3 mb-4 border rounded-lg focus:ring-2 focus:ring-indigo-200 outline-none ${
+                    className={`w-full p-2 sm:p-3 md:p-3 mb-4 border rounded-lg focus:ring-2 focus:ring-indigo-200 outline-none text-sm sm:text-base md:text-base ${
                       errors.some((err) => err.includes("Telefon")) ? "border-red-500" : "border-gray-200"
                     }`}
                     required
@@ -439,23 +439,23 @@ const Account: React.FC<AccountProps> = ({ user, updateProfilePicture, updateUse
                     placeholder="Yeni Şifre (boş bırakılabilir)"
                     value={editUser.password}
                     onChange={(e) => setEditUser({ ...editUser, password: e.target.value })}
-                    className={`w-full p-3 mb-4 border rounded-lg focus:ring-2 focus:ring-indigo-200 outline-none ${
+                    className={`w-full p-2 sm:p-3 md:p-3 mb-4 border rounded-lg focus:ring-2 focus:ring-indigo-200 outline-none text-sm sm:text-base md:text-base ${
                       errors.some((err) => err.includes("Şifre")) ? "border-red-500" : "border-gray-200"
                     }`}
                   />
-                  <div className="flex justify-end gap-4">
+                  <div className="flex justify-end gap-3 sm:gap-4 md:gap-4">
                     <button
                       onClick={() => {
                         setShowEditModal(false);
                         setErrors([]);
                       }}
-                      className="px-5 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors duration-200"
+                      className="px-4 sm:px-5 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors duration-200"
                     >
                       İptal
                     </button>
                     <button
                       onClick={handleEditUser}
-                      className="px-5 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors duration-300"
+                      className="px-4 sm:px-5 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors duration-300"
                     >
                       Kaydet
                     </button>
@@ -467,21 +467,21 @@ const Account: React.FC<AccountProps> = ({ user, updateProfilePicture, updateUse
             {/* Hesap Dondurma Modalı */}
             {showFreezeModal && (
               <div className="fixed inset-0 bg-gray-900 bg-opacity-70 flex items-center justify-center z-50">
-                <div className="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md transform transition-all duration-300 animate-fade-in">
-                  <h2 className="text-2xl font-bold text-gray-900 mb-4">Hesabı Dondur</h2>
-                  <p className="text-gray-600 mb-6">
+                <div className="bg-white p-6 sm:p-8 md:p-8 rounded-2xl shadow-2xl w-full max-w-[90vw] sm:max-w-md md:max-w-md transform transition-all duration-300 animate-fade-in">
+                  <h2 className="text-xl sm:text-2xl md:text-2xl font-bold text-gray-900 mb-4">Hesabı Dondur</h2>
+                  <p className="text-gray-600 text-sm sm:text-base md:text-base mb-4 sm:mb-6 md:mb-6">
                     Hesabınızı dondurmak istediğinize emin misiniz? Hesabınız 30 gün boyunca pasif kalacak ve sonrasında tamamen silinecek.
                   </p>
-                  <div className="flex justify-end gap-4">
+                  <div className="flex justify-end gap-3 sm:gap-4 md:gap-4">
                     <button
                       onClick={() => setShowFreezeModal(false)}
-                      className="px-5 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors duration-200"
+                      className="px-4 sm:px-5 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors duration-200"
                     >
                       İptal
                     </button>
                     <button
                       onClick={handleFreezeAccount}
-                      className="px-5 py-2 bg-gradient-to-r from-red-500 to-green-500 text-white rounded-lg hover:from-red-600 hover:to-green-600 transition-all duration-300"
+                      className="px-4 sm:px-5 py-2 bg-gradient-to-r from-red-500 to-green-500 text-white rounded-lg hover:from-red-600 hover:to-green-600 transition-all duration-300"
                     >
                       Dondur
                     </button>
@@ -495,5 +495,4 @@ const Account: React.FC<AccountProps> = ({ user, updateProfilePicture, updateUse
     </div>
   );
 };
-
 export default Account;

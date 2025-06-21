@@ -7,7 +7,21 @@ const Sidebar: React.FC = () => {
   const location = useLocation();
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 768) {
+        setIsCollapsed(true); // Collapse on mobile and sm screens
+      } else {
+        setIsCollapsed(false); // Expand on md and larger screens
+      }
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   useEffect(() => {
     const fetchUserRole = async () => {
@@ -53,47 +67,47 @@ const Sidebar: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="bg-gradient-to-b from-gray-900 to-gray-800 text-white w-64 min-h-screen p-4 fixed top-16 z-20 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-red-600"></div>
+      <div className="bg-gradient-to-b from-gray-900 to-gray-800 text-white w-14 sm:w-16 md:w-24 min-h-screen p-2 sm:p-2.5 md:p-4 fixed top-14 sm:top-16 md:top-18 z-20 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-5 w-5 sm:h-6 sm:w-6 md:h-8 md:w-8 border-t-2 border-red-600"></div>
       </div>
     );
   }
 
   return (
-    <div className={`bg-gradient-to-b from-gray-900 to-gray-800 text-white min-h-screen p-4 fixed top-16 z-20 transition-all duration-300 ${isCollapsed ? "w-16" : "w-64"}`}>
-      <div className="flex items-center justify-between mb-6">
-        {!isCollapsed && <h2 className="text-2xl font-extrabold text-red-600">Menü</h2>}
+    <div className={`bg-gradient-to-b from-gray-900 to-gray-800 text-white min-h-screen p-2 sm:p-2.5 md:p-4 fixed top-14 sm:top-16 md:top-18 z-20 transition-all duration-300 ${isCollapsed ? "w-14 sm:w-16 md:w-24" : "w-48 sm:w-52 md:w-64"}`}>
+      <div className="flex items-center justify-between mb-3 sm:mb-4 md:mb-6">
+        {!isCollapsed && <h2 className="text-lg sm:text-xl md:text-3xl font-bold text-red-500">Menü</h2>}
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="p-2 rounded-full hover:bg-gray-700 transition-colors duration-200"
+          className="p-1 sm:p-1.5 md:p-2 rounded-full hover:bg-gray-700 transition-colors duration-200"
         >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-4 h-4 sm:w-4.5 sm:h-4.5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={isCollapsed ? "M9 5l7 7-7 7" : "M15 19l-7-7 7-7"} />
           </svg>
         </button>
       </div>
-      <ul className="space-y-2">
+      <ul className="space-y-1 sm:space-y-1.5 md:space-y-2">
         {menuItems.map((item) => (
           <li key={item.label}>
             <button
               onClick={() => navigate(item.path)}
-              className={`flex items-center w-full text-left p-3 rounded-lg transition-all duration-200 ${
+              className={`flex items-center w-full text-left p-2 sm:p-2.5 md:p-3 rounded-lg transition-all duration-200 text-xs sm:text-sm md:text-base ${
                 location.pathname === item.path ? "bg-red-600 text-white shadow-md" : "hover:bg-red-700 hover:shadow-md"
               }`}
             >
-              <svg className="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 mr-2 sm:mr-2.5 md:mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={item.icon} />
               </svg>
-              {!isCollapsed && <span className="font-medium">{item.label}</span>}
+              {!isCollapsed && <span className="font-medium truncate">{item.label}</span>}
             </button>
           </li>
         ))}
         <li>
           <button
             onClick={handleLogout}
-            className="flex items-center w-full text-left p-3 rounded-lg hover:bg-red-700 transition-all duration-200"
+            className="flex items-center w-full text-left p-2 sm:p-2.5 md:p-3 rounded-lg hover:bg-red-700 transition-all duration-200 text-xs sm:text-sm md:text-base"
           >
-            <svg className="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 mr-2 sm:mr-2.5 md:mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h3a3 3 0 013 3v1" />
             </svg>
             {!isCollapsed && <span className="font-medium">Çıkış Yap</span>}
