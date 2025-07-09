@@ -2,15 +2,21 @@ To see the latest developments: https://github.com/BeyzaNurKeskinn/Trinity-Passw
 
 
 Trinity Frontend
-Trinity Frontend is a modern, responsive web application built with React, TypeScript, and TailwindCSS. It provides a secure and user-friendly interface for managing user accounts, passwords, and categories, with role-based access for admins and regular users. The application integrates with a backend API to handle authentication, user profile updates, category management, and dashboard functionalities. It is served using Nginx and containerized with Docker for easy deployment.
+
+Trinity Frontend is a modern, responsive web application built with React, TypeScript, and TailwindCSS.
+It provides a secure and user-friendly interface for managing user accounts, passwords, and categories, with role-based access for admins and regular users.
+The application integrates with a backend API to handle authentication, user profile updates, category management, and dashboard functionalities. 
+It is served using Nginx and containerized with Docker for easy deployment.
+
 Features
 
-User Authentication: Login and forgot password functionality with JWT-based authentication.
-Account Management: Update user profile details (username, email, phone, password) and upload profile pictures.
-Category Management: Admins can create, update, and delete categories with a search feature.
-Dashboard: Role-based dashboards displaying key metrics (e.g., password count, user count) for admins and featured/most-viewed passwords for users.
-Responsive Design: Built with TailwindCSS for a mobile-friendly, modern UI.
-Secure API Integration: Communicates with a backend API using Axios, with proper error handling and validation.
+    User Authentication: Login and forgot password functionality with JWT-based authentication.
+    Account Management: Update user profile details (username, email, phone, password) and upload profile pictures.
+    Category Management: Admins can create, update, and delete categories with a search feature.
+    Dashboard: Role-based dashboards displaying key metrics (e.g., password count, user count) for admins and featured/most-viewed passwords for users.
+    Responsive Design: Built with TailwindCSS for a mobile-friendly, modern UI.
+    Secure API Integration: Communicates with a backend API using Axios, with proper error handling and validation.
+    ...
 
 Tech Stack
 
@@ -88,61 +94,61 @@ The application will be available at http://localhost.
 
 Project Structure
 
-trinity-frontend/
+        trinity-frontend/
 
-├── src/
+    ├── src/
 
-│   ├── assets/                  # Static assets (e.g., images)
+    │   ├── assets/                  # Static assets (e.g., images)
 
-│   ├── components/
+    │   ├── components/
 
-│   │   ├── Account.tsx          # User account management component
+    │   │   ├── Account.tsx          # User account management component
 
-│   │   ├── CategoryManagement.tsx # Admin category management component
+    │   │   ├── CategoryManagement.tsx # Admin category management component
 
-│   │   ├── Dashboard.tsx        # Role-based dashboard component
+    │   │   ├── Dashboard.tsx        # Role-based dashboard component
 
-│   │   ├── ForgotPassword.tsx   # Password reset request component
+    │   │   ├── ForgotPassword.tsx   # Password reset request component
+    
+    │   │   ├── Login.tsx            # User login component
 
-│   │   ├── Login.tsx            # User login component
+    │   │   ├── Navbar.tsx           # Navigation bar component
 
-│   │   ├── Navbar.tsx           # Navigation bar component
-
-│   │   ├── Sidebar.tsx          # Sidebar navigation component
+    │   │   ├── Sidebar.tsx          # Sidebar navigation component
 
         .
         .
         .
-│   ├── services/
+    │   ├── services/
 
-│   │   ├── api.ts               # API service functions (e.g., login, getUserInfo)
+    │   │   ├── api.ts               # API service functions (e.g., login, getUserInfo)
 
-│   ├── App.tsx                  # Main application component
+    │   ├── App.tsx                  # Main application component
 
-│   ├── main.tsx                 # Entry point for React
+    │   ├── main.tsx                 # Entry point for React
+    
+    ├── public/                      # Public assets
 
-├── public/                      # Public assets
+    ├── nginx.conf                   # Nginx configuration for serving the SPA
 
-├── nginx.conf                   # Nginx configuration for serving the SPA
+    ├── vite.config.ts               # Vite configuration
 
-├── vite.config.ts               # Vite configuration
+    ├── tsconfig.json                # TypeScript configuration
 
-├── tsconfig.json                # TypeScript configuration
+    ├── tsconfig.node.json           # TypeScript configuration for Node.js files
 
-├── tsconfig.node.json           # TypeScript configuration for Node.js files
+    ├── postcss.config.js            # PostCSS configuration (TailwindCSS, Autoprefixer)
 
-├── postcss.config.js            # PostCSS configuration (TailwindCSS, Autoprefixer)
+    ├── .eslintrc.js                 # ESLint configuration
 
-├── .eslintrc.js                 # ESLint configuration
+    ├── .gitignore                   # Git ignore file
 
-├── .gitignore                   # Git ignore file
+    ├── Dockerfile                   # Docker configuration for building and serving
 
-├── Dockerfile                   # Docker configuration for building and serving
-
-├── package.json                 # Project metadata and dependencies
+    ├── package.json                 # Project metadata and dependencies
 
 
-├── README.md                    # This file
+    ├── README.md                    # This file
 
 
 Usage
